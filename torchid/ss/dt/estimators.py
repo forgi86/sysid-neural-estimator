@@ -16,7 +16,7 @@ class LSTMStateEstimator(nn.Module):
     The estimation is performed by processing (u, y) forward in time.
     """
 
-    def __init__(self, n_u=1, n_y=1, n_x=2, hidden_size=16, batch_first=False, flipped=False):
+    def __init__(self, n_u, n_y, n_x, hidden_size=16, batch_first=False, flipped=False):
         super(LSTMStateEstimator, self).__init__()
         self.n_u = n_u
         self.n_y = n_y
@@ -42,7 +42,7 @@ class LuenbergerStateEstimator(nn.Module):
     The estimation is performed by processing (u, y) forward in time.
     """
 
-    def __init__(self, f_xu, g_x=None, n_u=1, n_y=1, n_x=2, batch_first=False, flipped=False):
+    def __init__(self, f_xu, g_x, n_u, n_y, n_x, batch_first=False, flipped=False):
         super(LuenbergerStateEstimator, self).__init__()
         self.n_u = n_u
         self.n_y = n_y
@@ -54,7 +54,7 @@ class LuenbergerStateEstimator(nn.Module):
 
         self.gain_net = nn.Sequential(
             nn.Linear(n_x, 64),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(64, n_x * n_y),
             View((n_x, n_y))
         )
@@ -87,24 +87,26 @@ class LuenbergerStateEstimator(nn.Module):
         return x_step
 
 
-class FlippedLSTMStateEstimator(nn.Module):
-    """ Black-box estimator from the sequences of (u, y) to x[0].
-    The estimation is performed by processing (u, y) backward in time.
-    """
-
-    def __init__(self, n_u=1, n_y=1, n_x=2, hidden_size=16, batch_first=False):
-        super(LSTMStateEstimator, self).__init__()
+class FeedForwardStateEstimator(nn.Module):
+    def __init__(self, n_u, n_y, n_x, seq_len, batch_first=False):
+        super(FeedForwardStateEstimator, self).__init__()
         self.n_u = n_u
         self.n_y = n_y
         self.n_x = n_x
         self.batch_first = batch_first
+        self.seq_len = seq_len
 
-        self.lstm = nn.LSTM(input_size=n_y + n_u, hidden_size=hidden_size, batch_first=batch_first)
-        self.lstm_output = nn.Linear(hidden_size, n_x)
+        self.est_net = nn.Sequential(
+            nn.Linear((n_u + n_y)*seq_len, 64),
+            nn.Tanh(),
+            nn.Linear(64, n_x),
+        )
 
     def forward(self, u, y):
         uy = torch.cat((u, y), -1)
-        uy_rev = uy.flip(0)
-        _, (h0, c0) = self.lstm(uy_rev)
-        x0 = self.lstm_output(h0).squeeze(0)
-        return x0
+        if not self.batch_first:
+            uy = uy.transpose(0, 1)
+        feat = uy.flatten(start_dim=1)
+
+        x_est = self.est_net(feat)
+        return x_est

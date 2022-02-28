@@ -34,7 +34,7 @@ if __name__ == '__main__':
     f_xu = NeuralStateUpdate(n_x, n_u)  #PolynomialStateUpdate(n_x, n_u, d_max)
     g_x = LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
-    state_estimator = LSTMStateEstimator(n_u=1, n_y=1, n_x=2, flipped=True)
+    state_estimator = LSTMStateEstimator(n_u=1, n_y=1, n_x=2, flipped=False)
 
     # Setup optimizer
     optimizer = optim.Adam([
