@@ -35,7 +35,7 @@ class NeuralStateUpdate(nn.Module):
         self.n_feat = n_feat
         self.net = nn.Sequential(
             nn.Linear(n_x+n_u, n_feat),  # 2 states, 1 input
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(n_feat, n_x)
         )
 

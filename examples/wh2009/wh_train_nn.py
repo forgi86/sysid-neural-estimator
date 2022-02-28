@@ -16,8 +16,9 @@ if __name__ == '__main__':
     # Parameters
     n_fit = 40000
     subseq_len = 256
+    subseq_est_len = 20
     batch_size = 64
-    lr = 1e-3
+    lr = 1e-4
     epochs = 10
     n_x = 2
     n_u = 1
@@ -61,7 +62,7 @@ if __name__ == '__main__':
             batch_u = batch_u.transpose(0, 1)  # transpose to time_first
             batch_y = batch_y.transpose(0, 1)  # transpose to time_first
 
-            batch_x0 = state_estimator(batch_u, batch_y)
+            batch_x0 = state_estimator(batch_u[:subseq_est_len], batch_y[:subseq_est_len])
             batch_y_sim = model(batch_x0, batch_u)
 
             # Compute autoencoder loss
