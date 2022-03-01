@@ -19,7 +19,7 @@ if __name__ == '__main__':
     subseq_est_len = 50
     batch_size = 1024#64
     lr = 1e-3
-    epochs = 50
+    epochs = 150
     n_x = 6
     n_u = 1
     n_y = 1
