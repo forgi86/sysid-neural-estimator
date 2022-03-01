@@ -18,7 +18,7 @@ if __name__ == '__main__':
     subseq_len = 80
     subseq_est_len = 50
     batch_size = 1024
-    lr = 1e-3
+    lr = 1e-4
     epochs = 10
     n_x = 6
     n_u = 1
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     itr = 0
     model.f_xu.freeze_nl()
     for epoch in range(epochs):
-        if epoch >= 1:
+        if epoch >= 5:
             model.f_xu.unfreeze_nl()
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()

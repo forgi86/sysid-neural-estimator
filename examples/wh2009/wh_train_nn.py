@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
 from torchid.ss.dt.models import PolynomialStateUpdate, LinearStateUpdate, LinearOutput, NeuralOutput, NeuralStateUpdate
+import torchid.ss.dt.models as models
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from torchid.ss.dt.estimators import LSTMStateEstimator
 from loader import wh2009_loader
@@ -14,13 +15,12 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
 
     # Parameters
-    n_fit = 10000
     subseq_len = 80 #512 # 80 in gerben
     subseq_est_len = 50
     batch_size = 1024#64
     lr = 1e-3
-    epochs = 10
-    n_x = 3
+    epochs = 50
+    n_x = 6
     n_u = 1
     n_y = 1
 
@@ -31,8 +31,10 @@ if __name__ == '__main__':
     train_data = SubsequenceDataset(u_train, y_train, subseq_len=subseq_len)
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
-    f_xu = NeuralStateUpdate(n_x, n_u, n_feat=15)
-    g_x = NeuralOutput(n_x, n_u, n_feat=15)  #LinearOutput(n_x, n_y)
+    f_xu = models.NeuralLinStateUpdate(n_x, n_u, n_feat=15)
+    g_x = models.NeuralLinOutput(n_x, n_u, n_feat=15)  #LinearOutput(n_x, n_y)
+    #f_xu = models.NeuralStateUpdate(n_x, n_u, n_feat=15)
+    #g_x = models.NeuralOutput(n_x, n_u, n_feat=15)  #LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
     state_estimator = LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x, hidden_size=32, flipped=True)
 
@@ -123,3 +125,4 @@ if __name__ == '__main__':
     ax.plot(y_full[:, 0], 'k', label='meas')
     ax.grid(True)
     ax.plot(y_sim[:, 0], 'b', label='sim')
+
