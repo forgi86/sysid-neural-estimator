@@ -4,7 +4,7 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
-from torchid.ss.dt.models import PolynomialStateUpdate, LinearStateUpdate, LinearOutput, NeuralStateUpdate
+from torchid.ss.dt.models import LinearOutput, NeuralStateUpdate
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from torchid.ss.dt.estimators import LSTMStateEstimator
 from loader import silverbox_loader
@@ -22,7 +22,6 @@ if __name__ == '__main__':
     n_x = 2
     n_u = 1
     n_y = 1
-    d_max = 3
 
     # Load dataset
     t_train, u_train, y_train = silverbox_loader("train", scale=True)
@@ -93,7 +92,6 @@ if __name__ == '__main__':
     torch.save({"n_x": n_x,
                 "n_y": n_y,
                 "n_u": n_u,
-                "d_max": d_max,
                 "model": model.state_dict(),
                 "estimator": state_estimator.state_dict()
                 },

@@ -31,7 +31,7 @@ if __name__ == '__main__':
     train_data = SubsequenceDataset(u_train, y_train, subseq_len=subseq_len)
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
-    f_xu = NeuralStateUpdate(n_x, n_u, n_feat=32)
+    f_xu = PolynomialStateUpdate(n_x, n_u, d_max=3)
     g_x = NeuralOutput(n_x, n_u)  #LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
     state_estimator = LSTMStateEstimator(n_u=1, n_y=1, n_x=2, flipped=True)
@@ -50,10 +50,10 @@ if __name__ == '__main__':
 
     # Training loop
     itr = 0
-    #model.state_update.freeze_nl()
+    model.f_xu.freeze_nl()
     for epoch in range(epochs):
-        #if epoch >= 5:
-        #    model.state_update.unfreeze_nl()
+        if epoch >= 5:
+            model.f_xu.unfreeze_nl()
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()
 

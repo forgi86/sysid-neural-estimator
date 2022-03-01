@@ -4,7 +4,6 @@ from torchid.ss.poly_utils import valid_coeffs
 
 
 class NeuralStateUpdate(nn.Module):
-
     r"""State-update mapping modeled as a feed-forward neural network with one hidden layer.
 
     The model has structure:
@@ -34,7 +33,7 @@ class NeuralStateUpdate(nn.Module):
         self.n_u = n_u
         self.n_feat = n_feat
         self.net = nn.Sequential(
-            nn.Linear(n_x+n_u, n_feat),  # 2 states, 1 input
+            nn.Linear(n_x + n_u, n_feat),  # 2 states, 1 input
             nn.Tanh(),
             nn.Linear(n_feat, n_x)
         )
@@ -44,7 +43,7 @@ class NeuralStateUpdate(nn.Module):
                 if isinstance(m, nn.Linear):
                     nn.init.normal_(m.weight, mean=0, std=1e-4)
                     nn.init.constant_(m.bias, val=0)
-    
+
     def forward(self, X, U):
         XU = torch.cat((X, U), -1)
         DX = self.net(XU)
@@ -80,16 +79,16 @@ class PolynomialStateUpdate(nn.Module):
         self.poly_coeffs = torch.tensor(poly_coeffs)
         self.A = nn.Linear(n_x, n_x, bias=False)
         self.B = nn.Linear(n_u, n_x, bias=False)
-        #self.D = nn.linear(n_u, n_y, bias=False)
+        # self.D = nn.linear(n_u, n_y, bias=False)
         self.E = nn.Linear(self.n_poly, n_x, bias=False)
-        #self.F = nn.linear(self.n_poly, n_y)
+        # self.F = nn.linear(self.n_poly, n_y)
 
         if init_small:
             nn.init.normal_(self.A.weight, mean=0, std=1e-3)
             nn.init.normal_(self.B.weight, mean=0, std=1e-3)
             nn.init.normal_(self.E.weight, mean=0, std=1e-6)
 
-                # nn.init.constant_(module.bias, val=0)
+            # nn.init.constant_(module.bias, val=0)
 
     def freeze_nl(self):
         self.E.requires_grad_(False)
@@ -101,7 +100,7 @@ class PolynomialStateUpdate(nn.Module):
         xu = torch.cat((x, u), dim=-1)
         xu_ = xu.unsqueeze(xu.ndim - 1)
         zeta = torch.prod(torch.pow(xu_, self.poly_coeffs), axis=-1)
-        #eta = torch.prod(torch.pow(xu_, self.poly_coeffs), axis=-1)
+        # eta = torch.prod(torch.pow(xu_, self.poly_coeffs), axis=-1)
 
         dx = self.A(x) + self.B(u) + self.E(zeta)
         return dx
@@ -194,10 +193,35 @@ class LinearOutput(nn.Module):
         return self.C(x)
 
 
+class NeuralOutput(nn.Module):
+    r"""Output  mapping modeled as a feed-forward neural network in x.
+
+    The model has structure:
+
+    .. math::
+        \begin{aligned}
+            y_{k} = \mathcal{N}(x_k).
+        \end{aligned}
+    """
+
+    def __init__(self, n_x, n_y):
+        super(NeuralOutput, self).__init__()
+        self.n_x = n_x
+        self.n_y = n_y
+        self.net = nn.Sequential(nn.Linear(n_x, 32),
+                                 nn.Tanh(),
+                                 nn.Linear(32, n_y)
+                                 )
+
+    def forward(self, x):
+        return self.net(x)
+
+
 class ChannelsOutput(nn.Module):
     r"""Output  mapping corresponding to a specific state channel.
 
     """
+
     def __init__(self, channels):
         super(ChannelsOutput, self).__init__()
         self.channels = channels
