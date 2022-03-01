@@ -204,13 +204,13 @@ class NeuralOutput(nn.Module):
         \end{aligned}
     """
 
-    def __init__(self, n_x, n_y):
+    def __init__(self, n_x, n_y, n_feat=16):
         super(NeuralOutput, self).__init__()
         self.n_x = n_x
         self.n_y = n_y
-        self.net = nn.Sequential(nn.Linear(n_x, 32),
+        self.net = nn.Sequential(nn.Linear(n_x, n_feat),
                                  nn.Tanh(),
-                                 nn.Linear(32, n_y)
+                                 nn.Linear(n_feat, n_y)
                                  )
 
     def forward(self, x):

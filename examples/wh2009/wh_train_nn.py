@@ -14,13 +14,13 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
 
     # Parameters
-    n_fit = 40000
-    subseq_len = 512
-    subseq_est_len = 512
-    batch_size = 64
+    n_fit = 10000
+    subseq_len = 80 #512 # 80 in gerben
+    subseq_est_len = 50
+    batch_size = 1024#64
     lr = 1e-3
     epochs = 10
-    n_x = 2
+    n_x = 3
     n_u = 1
     n_y = 1
 
@@ -31,10 +31,10 @@ if __name__ == '__main__':
     train_data = SubsequenceDataset(u_train, y_train, subseq_len=subseq_len)
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
-    f_xu = NeuralStateUpdate(n_x, n_u, n_feat=32)
-    g_x = NeuralOutput(n_x, n_u)  #LinearOutput(n_x, n_y)
+    f_xu = NeuralStateUpdate(n_x, n_u, n_feat=15)
+    g_x = NeuralOutput(n_x, n_u, n_feat=15)  #LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
-    state_estimator = LSTMStateEstimator(n_u=1, n_y=1, n_x=2, flipped=True)
+    state_estimator = LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x, hidden_size=32, flipped=True)
 
     # Setup optimizer
     optimizer = optim.Adam([
@@ -50,10 +50,7 @@ if __name__ == '__main__':
 
     # Training loop
     itr = 0
-    #model.state_update.freeze_nl()
     for epoch in range(epochs):
-        #if epoch >= 5:
-        #    model.state_update.unfreeze_nl()
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()
 

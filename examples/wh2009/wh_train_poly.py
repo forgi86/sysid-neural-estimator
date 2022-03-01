@@ -15,12 +15,12 @@ if __name__ == '__main__':
 
     # Parameters
     n_fit = 40000
-    subseq_len = 512
-    subseq_est_len = 512
-    batch_size = 64
+    subseq_len = 80
+    subseq_est_len = 50
+    batch_size = 1024
     lr = 1e-3
     epochs = 10
-    n_x = 2
+    n_x = 6
     n_u = 1
     n_y = 1
 
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     f_xu = PolynomialStateUpdate(n_x, n_u, d_max=3)
     g_x = NeuralOutput(n_x, n_u)  #LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
-    state_estimator = LSTMStateEstimator(n_u=1, n_y=1, n_x=2, flipped=True)
+    state_estimator = LSTMStateEstimator(n_u=1, n_y=1, n_x=n_x, flipped=True)
 
     # Setup optimizer
     optimizer = optim.Adam([
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     itr = 0
     model.f_xu.freeze_nl()
     for epoch in range(epochs):
-        if epoch >= 5:
+        if epoch >= 1:
             model.f_xu.unfreeze_nl()
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()
