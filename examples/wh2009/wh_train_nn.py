@@ -4,7 +4,6 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
-from torchid.ss.dt.models import PolynomialStateUpdate, LinearStateUpdate, LinearOutput, NeuralOutput, NeuralStateUpdate
 import torchid.ss.dt.models as models
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from torchid.ss.dt.estimators import LSTMStateEstimator
@@ -32,7 +31,7 @@ if __name__ == '__main__':
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
     f_xu = models.NeuralLinStateUpdate(n_x, n_u, n_feat=15)
-    g_x = models.NeuralLinOutput(n_x, n_u, n_feat=15)  #LinearOutput(n_x, n_y)
+    g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=15)  #LinearOutput(n_x, n_y)
     #f_xu = models.NeuralStateUpdate(n_x, n_u, n_feat=15)
     #g_x = models.NeuralOutput(n_x, n_u, n_feat=15)  #LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)

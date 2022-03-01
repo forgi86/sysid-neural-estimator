@@ -71,7 +71,7 @@ if __name__ == '__main__':
                 batch_y_fit = batch_y
             else:
                 batch_u_fit = batch_u[subseq_est_len:]
-                batch_y_fit = model(batch_x0, batch_u_fit)
+                batch_y_fit = batch_y[subseq_est_len:]
 
             batch_y_sim = model(batch_x0, batch_u_fit)
             loss = torch.nn.functional.mse_loss(batch_y, batch_y_sim)

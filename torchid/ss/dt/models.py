@@ -18,24 +18,24 @@ class NeuralStateUpdate(nn.Module):
     Args:
         n_x (int): Number of state variables
         n_u (int): Number of input variables
-        n_feat: (int, optional): Number of input features in the hidden layer. Default: 0
+        hidden_size: (int, optional): Number of input features in the hidden layer. Default: 0
         init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
         activation: (str): Activation function in the hidden layer. Either 'relu', 'softplus', 'tanh'. Default: 'relu'
 
     Examples::
 
-        >>> ss_model = NeuralStateUpdate(n_x=2, n_u=1, n_feat=64)
+        >>> ss_model = NeuralStateUpdate(n_x=2, n_u=1, hidden_size=64)
     """
 
-    def __init__(self, n_x, n_u, n_feat=16, init_small=True):
+    def __init__(self, n_x, n_u, hidden_size=16, init_small=True):
         super(NeuralStateUpdate, self).__init__()
         self.n_x = n_x
         self.n_u = n_u
-        self.n_feat = n_feat
+        self.n_feat = hidden_size
         self.net = nn.Sequential(
-            nn.Linear(n_x + n_u, n_feat),  # 2 states, 1 input
+            nn.Linear(n_x + n_u, hidden_size),  # 2 states, 1 input
             nn.Tanh(),
-            nn.Linear(n_feat, n_x)
+            nn.Linear(hidden_size, n_x)
         )
 
         if init_small:
@@ -127,7 +127,7 @@ class NeuralLinStateUpdate(nn.Module):
 
     Examples::
 
-        >>> ss_model = NeuralStateUpdate(n_x=2, n_u=1, n_feat=64)
+        >>> ss_model = NeuralStateUpdate(n_x=2, n_u=1, hidden_size=64)
     """
 
     def __init__(self, n_x, n_u, n_feat=16, init_small=True):
@@ -212,19 +212,19 @@ class CTSNeuralStateSpace(nn.Module):
     r"""A state-space model to represent the cascaded two-tank system.
 
     Args:
-        n_feat: (int, optional): Number of input features in the hidden layer. Default: 0
+        hidden_size: (int, optional): Number of input features in the hidden layer. Default: 0
         init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
     """
 
-    def __init__(self, n_x, n_u, n_feat=64, init_small=True):
+    def __init__(self, n_x, n_u, hidden_size=64, init_small=True):
         super(CTSNeuralStateSpace, self).__init__()
         self.n_x = n_x
         self.n_u = n_u
-        self.n_feat = n_feat
+        self.n_feat = hidden_size
         self.net = nn.Sequential(
-            nn.Linear(n_x + n_u, n_feat),  # 2 states, 1 input
+            nn.Linear(n_x + n_u, hidden_size),  # 2 states, 1 input
             nn.ReLU(),
-            nn.Linear(n_feat, n_x)
+            nn.Linear(hidden_size, n_x)
         )
 
         if init_small:
@@ -234,9 +234,9 @@ class CTSNeuralStateSpace(nn.Module):
                     nn.init.constant_(m.bias, val=0)
 
     def forward(self, X, U):
-        XU = torch.cat((X, U), -1)
-        DX = self.net(XU)
-        return DX
+        xu = torch.cat((X, U), -1)
+        dx = self.net(xu)
+        return dx
 
 
 class LinearOutput(nn.Module):
@@ -271,13 +271,13 @@ class NeuralOutput(nn.Module):
         \end{aligned}
     """
 
-    def __init__(self, n_x, n_y, n_feat=16):
+    def __init__(self, n_x, n_y, hidden_size=16):
         super(NeuralOutput, self).__init__()
         self.n_x = n_x
         self.n_y = n_y
-        self.net = nn.Sequential(nn.Linear(n_x, n_feat),
+        self.net = nn.Sequential(nn.Linear(n_x, hidden_size),
                                  nn.Tanh(),
-                                 nn.Linear(n_feat, n_y)
+                                 nn.Linear(hidden_size, n_y)
                                  )
 
     def forward(self, x):
@@ -295,20 +295,19 @@ class NeuralLinOutput(nn.Module):
         \end{aligned}
     """
 
-    def __init__(self, n_x, n_y, n_feat=16):
+    def __init__(self, n_x, n_y, hidden_size=16):
         super(NeuralLinOutput, self).__init__()
         self.n_x = n_x
         self.n_y = n_y
-        self.net = nn.Sequential(nn.Linear(n_x, n_feat),
+        self.net = nn.Sequential(nn.Linear(n_x, hidden_size),
                                  nn.Tanh(),
-                                 nn.Linear(n_feat, n_y)
+                                 nn.Linear(hidden_size, n_y)
                                  )
 
         self.lin = nn.Linear(n_x, n_y, bias=False)
 
     def forward(self, x):
         return self.net(x)
-
 
 
 class ChannelsOutput(nn.Module):

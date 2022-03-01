@@ -40,6 +40,21 @@ def wh2009_loader(dataset, scale=True, dtype=np.float32):
         return t_test, u_test, y_test
 
 
+def wh2009_scaling():
+    df_data = pd.read_csv(os.path.join("data", "WienerHammerBenchmark.csv"))
+    y = np.array(df_data[COL_Y])
+    u = np.array(df_data[COL_U])
+    fs = np.array(df_data[COL_F].iloc[0], dtype=np.float32)
+    N = y.size
+    ts = 1/fs
+    t = np.arange(N)*ts
+
+    u_train = u[:idx_train]
+    y_train = y[:idx_train]
+    y_mean, y_std = np.mean(y_train), np.std(y_train)
+    return y_mean, y_std
+
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     for dataset in ["full", "train", "test"]:
