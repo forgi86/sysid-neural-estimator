@@ -29,7 +29,7 @@ if __name__ == '__main__':
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--est_frac', type=float, default=0.63, metavar='N',
                         help='fraction of the subsequence used for initial state estimation')
-    parser.add_argument('--est_direction', type=str, default="backward",
+    parser.add_argument('--est_direction', type=str, default="forward",
                         help='Estimate forward in time')
     parser.add_argument('--est_type', type=str, default="FF",
                         help='Estimator type. Possible values: LSTM|FF')
@@ -217,9 +217,12 @@ if __name__ == '__main__':
     # %% Simulate
     t_full, u_full, y_full = wh2009_loader("full", scale=True)
     with torch.no_grad():
+        model.eval()
+        estimator.eval()
         u_v = torch.tensor(u_full[:, None, :])
         y_v = torch.tensor(y_full[:, None, :])
-        x0 = estimator(u_v, y_v)
+        # x0 = estimator(u_v, y_v)
+        x0 = torch.zeros((1, n_x), dtype=u_v.dtype, device=u_v.device)
         y_sim = model(x0, u_v).squeeze(1).detach().numpy()
 
     # %% Metrics

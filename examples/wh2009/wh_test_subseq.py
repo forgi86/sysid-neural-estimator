@@ -26,6 +26,8 @@ if __name__ == '__main__':
     backward_est = True if args.est_direction == "backward" else False
     load_len = args.seq_len if backward_est else args.seq_len + seq_est_len
 
+    estimate_state = True #False
+
     # Load dataset
     t, u, y = wh2009_loader("test", scale=True)
     y_mean, y_std = wh2009_scaling()
@@ -61,7 +63,12 @@ if __name__ == '__main__':
 
             batch_est_u = batch_u[:seq_est_len]
             batch_est_y = batch_u[:seq_est_len]
-            batch_x0 = estimator(batch_est_u, batch_est_y)
+            if estimate_state:
+                batch_x0 = estimator(batch_est_u, batch_est_y)
+            else:
+                batch_x0 = torch.zeros((batch_est_y.shape[1], n_x),
+                                       dtype=batch_est_y.dtype,
+                                       device=batch_est_y.device)
 
             if backward_est:
                 # fit on the whole dataset
