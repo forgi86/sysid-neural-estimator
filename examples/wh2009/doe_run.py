@@ -29,6 +29,8 @@ if __name__ == "__main__":
                         help='number of CPU threads')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
+    parser.add_argument('--dry-run', action='store_true', default=False,
+                        help='dry run')
 
     args = parser.parse_args()
 
