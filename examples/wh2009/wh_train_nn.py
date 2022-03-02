@@ -32,8 +32,6 @@ if __name__ == '__main__':
 
     f_xu = models.NeuralLinStateUpdate(n_x, n_u, n_feat=15)
     g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=15)  #LinearOutput(n_x, n_y)
-    #f_xu = models.NeuralStateUpdate(n_x, n_u, n_feat=15)
-    #g_x = models.NeuralOutput(n_x, n_u, n_feat=15)  #LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
     state_estimator = LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x, hidden_size=32, flipped=True)
 
