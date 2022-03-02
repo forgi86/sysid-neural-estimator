@@ -90,11 +90,11 @@ if __name__ == '__main__':
     print(f"Val loss: {val_loss:.3f}")
     #%%
     batch_y_sim_np = batch_y_sim.squeeze(-1).transpose(0, 1).numpy()
-    batch_y_np = batch_y.squeeze(-1).transpose(0, 1).numpy()
+    batch_y_fit_np = batch_y_fit.squeeze(-1).transpose(0, 1).numpy()
 
     examples = 4
     fig, ax = plt.subplots(examples, 1, sharex=True)
     for idx in range(examples):
         ax[idx].plot(batch_y_sim_np[idx], 'k')
-        ax[idx].plot(batch_y_np[idx], 'b')
-        ax[idx].plot(batch_y_np[idx] - batch_y_sim_np[idx], 'r')
+        ax[idx].plot(batch_y_fit_np[idx], 'b')
+        ax[idx].plot(batch_y_fit_np[idx] - batch_y_sim_np[idx], 'r')

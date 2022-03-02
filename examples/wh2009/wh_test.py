@@ -35,8 +35,8 @@ if __name__ == '__main__':
     with torch.no_grad():
         u_v = torch.tensor(u[:, None, :])
         y_v = torch.tensor(y[:, None, :])
-        x0 = estimator(u_v, y_v)
-        # x0 = torch.zeros(1, n_x, dtype=torch.float32)  # initial state set to 0 for simplicity
+        # x0 = estimator(u_v, y_v)
+        x0 = torch.zeros((1, n_x), dtype=u_v.dtype, device=u_v.device)  # initial state set to 0 for simplicity
         y_sim = model(x0, u_v).squeeze(1)  # remove batch dimension
     y_sim = y_sim.detach().numpy()
 

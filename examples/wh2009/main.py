@@ -29,7 +29,7 @@ if __name__ == '__main__':
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--est_frac', type=float, default=0.63, metavar='N',
                         help='fraction of the subsequence used for initial state estimation')
-    parser.add_argument('--est_direction', type=str, default="forward",
+    parser.add_argument('--est_direction', type=str, default="backward",
                         help='Estimate forward in time')
     parser.add_argument('--est_type', type=str, default="FF",
                         help='Estimator type. Possible values: LSTM|FF')
@@ -61,7 +61,12 @@ if __name__ == '__main__':
 
     # Derived parameters
     seq_est_len = int(args.seq_len * args.est_frac)
-    backward_est = True if args.est_direction == "backward" else False
+    if args.est_direction == "backward":
+        backward_est = True
+    elif args.est_direction == "forward":
+        backward_est = False
+    else:
+        raise ValueError("Wrong estimator direction. Possible values: backward|forward")
     load_len = args.seq_len if backward_est else args.seq_len + seq_est_len
 
     # CPU/GPU resources
@@ -134,7 +139,7 @@ if __name__ == '__main__':
             batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
 
             batch_est_u = batch_u[:seq_est_len]
-            batch_est_y = batch_u[:seq_est_len]
+            batch_est_y = batch_y[:seq_est_len]
             batch_x0 = estimator(batch_est_u, batch_est_y)
 
             if backward_est:
