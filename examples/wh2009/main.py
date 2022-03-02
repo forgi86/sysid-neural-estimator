@@ -238,16 +238,17 @@ if __name__ == '__main__':
 
     print(f"RMSE: {e_rms:.1f}mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
-    # %% Test
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(TRAIN_LOSS, 'k', label='TRAIN')
-    ax.plot(VAL_LOSS, 'r', label='VAL')
-    ax.grid(True)
-    ax.legend()
-    ax.set_ylabel("Loss (-)")
-    ax.set_xlabel("Iteration (-)")
+    # %% Plots
+    if not args.no_fig:
+        fig, ax = plt.subplots(1, 1)
+        ax.plot(TRAIN_LOSS, 'k', label='TRAIN')
+        ax.plot(VAL_LOSS, 'r', label='VAL')
+        ax.grid(True)
+        ax.legend()
+        ax.set_ylabel("Loss (-)")
+        ax.set_xlabel("Iteration (-)")
 
-    fig, ax = plt.subplots(1, 1, sharex=True)
-    ax.plot(y_full[:, 0], 'k', label='meas')
-    ax.grid(True)
-    ax.plot(y_sim[:, 0], 'b', label='sim')
+        fig, ax = plt.subplots(1, 1, sharex=True)
+        ax.plot(y_full[:, 0], 'k', label='meas')
+        ax.grid(True)
+        ax.plot(y_sim[:, 0], 'b', label='sim')
