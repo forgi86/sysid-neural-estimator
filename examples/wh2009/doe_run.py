@@ -82,6 +82,6 @@ if __name__ == "__main__":
         cmd_out = subprocess.check_output(cmd_in.split(), env=env).decode()
         run_time = time.time() - time_start
         # save text log
-        log_msg = '{cmd_in}\n' + cmd_out + f"\nRun time: {run_time}"
+        log_msg = cmd_in + "\n" + cmd_out + f"\nRun time: {run_time}"
         with open(log_name, "w") as f:
             f.write(log_msg)
