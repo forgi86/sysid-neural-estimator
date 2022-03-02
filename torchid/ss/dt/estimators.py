@@ -88,7 +88,7 @@ class LuenbergerStateEstimator(nn.Module):
 
 
 class FeedForwardStateEstimator(nn.Module):
-    def __init__(self, n_u, n_y, n_x, seq_len, batch_first=False):
+    def __init__(self, n_u, n_y, n_x, seq_len, hidden_size=64, batch_first=False):
         super(FeedForwardStateEstimator, self).__init__()
         self.n_u = n_u
         self.n_y = n_y
@@ -97,9 +97,9 @@ class FeedForwardStateEstimator(nn.Module):
         self.seq_len = seq_len
 
         self.est_net = nn.Sequential(
-            nn.Linear((n_u + n_y)*seq_len, 64),
+            nn.Linear((n_u + n_y)*seq_len, hidden_size),
             nn.Tanh(),
-            nn.Linear(64, n_x),
+            nn.Linear(hidden_size, n_x),
         )
 
     def forward(self, u, y):

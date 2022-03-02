@@ -1,8 +1,8 @@
 import os
 import torch
 import torchid.ss.dt.models as models
+import torchid.ss.dt.estimators as estimators
 from torchid.ss.dt.simulator import StateSpaceSimulator
-from torchid.ss.dt.estimators import LSTMStateEstimator
 from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
 from loader import wh2009_loader, wh2009_scaling
@@ -39,7 +39,17 @@ if __name__ == '__main__':
     f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=args.hidden_size)
     g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=args.hidden_size)  #LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
-    estimator = LSTMStateEstimator(n_u=n_u, n_y=n_y, n_x=n_x, flipped=True)
+    if args.est_type == "LSTM":
+        estimator = estimators.LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
+                                                  hidden_size=args.est_hidden_size,
+                                                  flipped=backward_est)
+    elif args.est_type == "FF":
+        estimator = estimators.FeedForwardStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
+                                                         hidden_size=args.est_hidden_size,
+                                                         seq_len=seq_est_len)
+    else:
+        raise ValueError("Wrong estimator type. Possible values: LSTM|FF")
+
     model.load_state_dict(model_data["model"])
     estimator.load_state_dict(model_data["estimator"])
 
@@ -68,8 +78,9 @@ if __name__ == '__main__':
             loss = torch.nn.functional.mse_loss(batch_y_fit, batch_y_sim)
             val_loss += loss
 
-        val_loss = val_loss/len(dataset)
+    val_loss = val_loss/len(loader)
 
+    print(f"Val loss: {val_loss:.3f}")
     #%%
     batch_y_sim_np = batch_y_sim.squeeze(-1).transpose(0, 1).numpy()
     batch_y_np = batch_y.squeeze(-1).transpose(0, 1).numpy()

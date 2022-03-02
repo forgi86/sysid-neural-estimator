@@ -5,14 +5,14 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
 import torchid.ss.dt.models as models
+import torchid.ss.dt.estimators as estimators
 from torchid.ss.dt.simulator import StateSpaceSimulator
-from torchid.ss.dt.estimators import LSTMStateEstimator
 from loader import wh2009_loader
 import matplotlib
+
 matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
 import argparse
-
 
 if __name__ == '__main__':
 
@@ -31,8 +31,8 @@ if __name__ == '__main__':
                         help='fraction of the subsequence used for initial state estimation')
     parser.add_argument('--est_direction', type=str, default="backward",
                         help='Estimate forward in time')
-    parser.add_argument('--est_type', type=str, default="LSTM",
-                        help='Estimator type')
+    parser.add_argument('--est_type', type=str, default="FF",
+                        help='Estimator type. Possible values: LSTM|FF')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
                         help='model: number of units per hidden layer (default: 64)')
     parser.add_argument('--hidden_size', type=int, default=15, metavar='N',
@@ -75,12 +75,12 @@ if __name__ == '__main__':
     n_y = 1
     n_fit = 80000
 
-    #%% Load dataset
+    # %% Load dataset
     t_train, u_train, y_train = wh2009_loader("train", scale=True)
     t_fit, u_fit, y_fit = t_train[:n_fit], u_train[:n_fit], y_train[:n_fit]
     t_val, u_val, y_val = t_train[n_fit:] - t_train[n_fit], u_train[n_fit:], y_train[n_fit:]
 
-    #%%  Prepare dataset, models, optimizer
+    # %%  Prepare dataset, models, optimizer
     train_data = SubsequenceDataset(u_train, y_train, subseq_len=load_len)
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     u_val_t = torch.tensor(u_val[:, None, :])
@@ -89,9 +89,18 @@ if __name__ == '__main__':
     f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=args.hidden_size).to(device)
     g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=args.hidden_size).to(device)
     model = StateSpaceSimulator(f_xu, g_x).to(device)
-    estimator = LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
-                                   hidden_size=args.est_hidden_size,
-                                   flipped=backward_est).to(device)
+    if args.est_type == "LSTM":
+        estimator = estimators.LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
+                                                  hidden_size=args.est_hidden_size,
+                                                  flipped=backward_est)
+    elif args.est_type == "FF":
+        estimator = estimators.FeedForwardStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
+                                                         hidden_size=args.est_hidden_size,
+                                                         seq_len=seq_est_len)
+    else:
+        raise ValueError("Wrong estimator type. Possible values: LSTM|FF")
+
+    estimator = estimator.to(device)
 
     # Setup optimizer
     optimizer = optim.Adam([
@@ -152,12 +161,12 @@ if __name__ == '__main__':
             if args.dry_run:
                 break
 
-#            if itr % args.log_interval == 0:
-#                print(f'Iteration {itr} | iteration loss {loss:.4f} ')
+            #            if itr % args.log_interval == 0:
+            #                print(f'Iteration {itr} | iteration loss {loss:.4f} ')
 
             itr += 1
 
-        train_loss = train_loss/len(train_loader)
+        train_loss = train_loss / len(train_loader)
         TRAIN_LOSS.append(train_loss)
 
         # Validation loss: full simulation error
@@ -176,17 +185,19 @@ if __name__ == '__main__':
         # best model so far, save it
         if val_loss < min_loss:
             torch.save({
-                        "epoch": epoch,
-                        "args": args,
-                        "time": time.time() - start_time,
-                        "n_x": n_x,
-                        "n_y": n_y,
-                        "n_u": n_u,
-                        "model": model.state_dict(),
-                        "estimator": estimator.state_dict()
-                        },
-                       os.path.join("models", model_filename)
-                       )
+                "epoch": epoch,
+                "args": args,
+                "time": time.time() - start_time,
+                "n_x": n_x,
+                "n_y": n_y,
+                "n_u": n_u,
+                "TRAIN_LOSS": TRAIN_LOSS,
+                "VAL_LOSS": VAL_LOSS,
+                "model": model.state_dict(),
+                "estimator": estimator.state_dict()
+            },
+                os.path.join("models", model_filename)
+            )
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
 
@@ -203,7 +214,7 @@ if __name__ == '__main__':
         },
             os.path.join("models", model_filename)
         )
-    #%% Simulate
+    # %% Simulate
     t_full, u_full, y_full = wh2009_loader("full", scale=True)
     with torch.no_grad():
         u_v = torch.tensor(u_full[:, None, :])
@@ -211,15 +222,16 @@ if __name__ == '__main__':
         x0 = estimator(u_v, y_v)
         y_sim = model(x0, u_v).squeeze(1).detach().numpy()
 
-    #%% Metrics
+    # %% Metrics
     from torchid import metrics
+
     e_rms = 1000 * metrics.rmse(y_full, y_sim)[0]
     fit_idx = metrics.fit_index(y_full, y_sim)[0]
     r_sq = metrics.r_squared(y_full, y_sim)[0]
 
     print(f"RMSE: {e_rms:.1f}mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
-    #%% Test
+    # %% Test
     fig, ax = plt.subplots(1, 1)
     ax.plot(TRAIN_LOSS, 'k', label='TRAIN')
     ax.plot(VAL_LOSS, 'r', label='VAL')
@@ -232,4 +244,3 @@ if __name__ == '__main__':
     ax.plot(y_full[:, 0], 'k', label='meas')
     ax.grid(True)
     ax.plot(y_sim[:, 0], 'b', label='sim')
-
