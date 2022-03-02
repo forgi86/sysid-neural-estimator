@@ -31,7 +31,7 @@ if __name__ == '__main__':
                         help='fraction of the subsequence used for initial state estimation')
     parser.add_argument('--est_direction', type=str, default="backward",
                         help='Estimate forward in time')
-    parser.add_argument('--est_type', type=str, default="FF",
+    parser.add_argument('--est_type', type=str, default="LSTM",
                         help='Estimator type. Possible values: LSTM|FF')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
                         help='model: number of units per hidden layer (default: 64)')

@@ -62,7 +62,7 @@ if __name__ == '__main__':
             batch_y = batch_y.transpose(0, 1)  # transpose to time_first
 
             batch_est_u = batch_u[:seq_est_len]
-            batch_est_y = batch_u[:seq_est_len]
+            batch_est_y = batch_y[:seq_est_len]
             if estimate_state:
                 batch_x0 = estimator(batch_est_u, batch_est_y)
             else:
