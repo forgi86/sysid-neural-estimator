@@ -109,7 +109,7 @@ if __name__ == '__main__':
         model_filename = "model.pt"
 
     VAL_LOSS, TRAIN_LOSS = [], []
-    min_loss = torch.inf # for early stopping
+    min_loss = torch.inf  # for early stopping
 
     # %% Training loop
     itr = 0
