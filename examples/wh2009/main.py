@@ -201,7 +201,7 @@ if __name__ == '__main__':
                 "model": model.state_dict(),
                 "estimator": estimator.state_dict()
             },
-                os.path.join("models", model_filename)
+                os.path.join("models", args.save_folder)
             )
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
