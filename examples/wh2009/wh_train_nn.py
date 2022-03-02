@@ -77,7 +77,6 @@ if __name__ == '__main__':
             loss = torch.nn.functional.mse_loss(batch_y, batch_y_sim)
             train_loss += loss.item()
 
-            # Statistics
             # ITR_LOSS.append(loss.item())
 
             # Optimize
@@ -107,7 +106,6 @@ if __name__ == '__main__':
                         "n_x": n_x,
                         "n_y": n_y,
                         "n_u": n_u,
-                        "hidden_size": hidden_size,
                         "model": model.state_dict(),
                         "estimator": state_estimator.state_dict()
                         },
