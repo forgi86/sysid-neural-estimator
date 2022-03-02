@@ -239,7 +239,7 @@ if __name__ == '__main__':
     print(f"RMSE: {e_rms:.1f}mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
     # %% Plots
-    if not args.no_fig:
+    if not args.no_figures:
         fig, ax = plt.subplots(1, 1)
         ax.plot(TRAIN_LOSS, 'k', label='TRAIN')
         ax.plot(VAL_LOSS, 'r', label='VAL')
