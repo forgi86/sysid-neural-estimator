@@ -27,7 +27,7 @@ if __name__ == '__main__':
     f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=args.hidden_size)
     g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=args.hidden_size)  #LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
-    state_estimator = LSTMStateEstimator(n_u=n_u, n_y=n_y, n_x=n_x, flipped=True)
+    estimator = LSTMStateEstimator(n_u=n_u, n_y=n_y, n_x=n_x, flipped=True)
     model.load_state_dict(model_data["model"])
     #state_estimator.load_state_dict(model_data["estimator"])
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     with torch.no_grad():
         u_v = torch.tensor(u[:, None, :])
         y_v = torch.tensor(y[:, None, :])
-        x0 = state_estimator(u_v, y_v)
+        x0 = estimator(u_v, y_v)
         # x0 = torch.zeros(1, n_x, dtype=torch.float32)  # initial state set to 0 for simplicity
         y_sim = model(x0, u_v).squeeze(1)  # remove batch dimension
     y_sim = y_sim.detach().numpy()

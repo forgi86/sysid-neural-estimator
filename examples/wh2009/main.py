@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Koopman spectrum estimation')
     parser.add_argument('--experiment_id', type=int, default=-1, metavar='N',
                         help='experiment id (default: -1)')
-    parser.add_argument('--epochs', type=int, default=20, metavar='N',
+    parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 20000)')
     parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='batch size (default:64)')
@@ -89,14 +89,14 @@ if __name__ == '__main__':
     f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=args.hidden_size).to(device)
     g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=args.hidden_size).to(device)
     model = StateSpaceSimulator(f_xu, g_x).to(device)
-    state_estimator = LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
-                                         hidden_size=args.est_hidden_size,
-                                         flipped=backward_est).to(device)
+    estimator = LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
+                                   hidden_size=args.est_hidden_size,
+                                   flipped=backward_est).to(device)
 
     # Setup optimizer
     optimizer = optim.Adam([
         {'params': model.parameters(), 'lr': args.lr},
-        {'params': state_estimator.parameters(), 'lr': args.lr},
+        {'params': estimator.parameters(), 'lr': args.lr},
     ], lr=args.lr)
 
     # %% Other initializations
@@ -108,13 +108,15 @@ if __name__ == '__main__':
     else:
         model_filename = "model.pt"
 
-    ITR_LOSS, VAL_LOSS, TRAIN_LOSS = [], [], []
-    min_loss = torch.inf
+    VAL_LOSS, TRAIN_LOSS = [], []
+    min_loss = torch.inf # for early stopping
 
     # %% Training loop
     itr = 0
     for epoch in range(args.epochs):
         train_loss = 0  # train loss for the whole epoch
+        model.train()
+        estimator.train()
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()
 
@@ -124,7 +126,7 @@ if __name__ == '__main__':
 
             batch_est_u = batch_u[:seq_est_len]
             batch_est_y = batch_u[:seq_est_len]
-            batch_x0 = state_estimator(batch_est_u, batch_est_y)
+            batch_x0 = estimator(batch_est_u, batch_est_y)
 
             if backward_est:
                 # fit on the whole dataset
@@ -147,10 +149,12 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
-            if itr % args.log_interval == 0:
-                print(f'Iteration {itr} | iteration loss {loss:.4f} ')
-                if args.dry_run:
-                    break
+            if args.dry_run:
+                break
+
+#            if itr % args.log_interval == 0:
+#                print(f'Iteration {itr} | iteration loss {loss:.4f} ')
+
             itr += 1
 
         train_loss = train_loss/len(train_loader)
@@ -158,6 +162,8 @@ if __name__ == '__main__':
 
         # Validation loss: full simulation error
         with torch.no_grad():
+            model.eval()
+            estimator.eval()
             x0 = torch.zeros((1, n_x), dtype=u_val_t.dtype,
                              device=u_val_t.device)
             # x0 = state_estimator(u_val_t, y_val_t)
@@ -177,19 +183,32 @@ if __name__ == '__main__':
                         "n_y": n_y,
                         "n_u": n_u,
                         "model": model.state_dict(),
-                        "estimator": state_estimator.state_dict()
+                        "estimator": estimator.state_dict()
                         },
                        os.path.join("models", model_filename)
                        )
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
 
+    if min_loss is torch.nan:
+        torch.save({
+            "epoch": epoch,
+            "args": args,
+            "time": time.time() - start_time,
+            "n_x": n_x,
+            "n_y": n_y,
+            "n_u": n_u,
+            "model": model.state_dict(),
+            "estimator": estimator.state_dict()
+        },
+            os.path.join("models", model_filename)
+        )
     #%% Simulate
     t_full, u_full, y_full = wh2009_loader("full", scale=True)
     with torch.no_grad():
         u_v = torch.tensor(u_full[:, None, :])
         y_v = torch.tensor(y_full[:, None, :])
-        x0 = state_estimator(u_v, y_v)
+        x0 = estimator(u_v, y_v)
         y_sim = model(x0, u_v).squeeze(1).detach().numpy()
 
     #%% Metrics
