@@ -9,8 +9,7 @@ import torchid.ss.dt.estimators as estimators
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from loader import wh2009_loader
 import matplotlib
-
-matplotlib.use("TKAgg")
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import argparse
 

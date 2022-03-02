@@ -67,6 +67,8 @@ if __name__ == "__main__":
         cmd_in += f" --n-threads {args.n_threads}"
         if args.no_cuda:
             cmd_in += f" --no-cuda"
+        if args.dry_run:
+            cmd_in += f" --dry-run"
         cmd_in += f" --no-figures"
         if args.no_run:
             print(cmd_in)
