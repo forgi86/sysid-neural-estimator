@@ -4,6 +4,8 @@ import torchid.ss.dt.models as models
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from torchid.ss.dt.estimators import LSTMStateEstimator
 from loader import wh2009_loader, wh2009_scaling
+import matplotlib
+matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
 from torchid import metrics
 
@@ -21,7 +23,7 @@ if __name__ == '__main__':
     y_mean, y_std = wh2009_scaling()
 
     #%% Load models and parameters
-    f_xu = models.NeuralLinStateUpdate(n_x, n_u, n_feat=15)
+    f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=15)
     g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=15)  #LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
     state_estimator = LSTMStateEstimator(n_u=n_u, n_y=n_y, n_x=n_x, flipped=True)

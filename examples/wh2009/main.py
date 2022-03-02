@@ -48,8 +48,11 @@ if __name__ == '__main__':
                         help='number of CPU threads')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
+    parser.add_argument('--log-interval', type=int, default=20,
+                        help='log interval')
     parser.add_argument('--no-figures', action='store_true', default=False,
                         help='Plot figures')
+
 
     args = parser.parse_args()
 
@@ -76,7 +79,7 @@ if __name__ == '__main__':
     train_data = SubsequenceDataset(u_train, y_train, subseq_len=load_len)
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
 
-    f_xu = models.NeuralLinStateUpdate(n_x, n_u, n_feat=args.hidden_size).to(device)
+    f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=args.hidden_size).to(device)
     g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=args.hidden_size).to(device)
     model = StateSpaceSimulator(f_xu, g_x).to(device)
     state_estimator = LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
@@ -89,8 +92,7 @@ if __name__ == '__main__':
         {'params': state_estimator.parameters(), 'lr': args.lr},
     ], lr=args.lr)
 
-    LOSS = []
-    LOSS_CONSISTENCY = []
+    ITER_LOSS = []
     LOSS_FIT = []
 
     # Training loop
@@ -102,10 +104,6 @@ if __name__ == '__main__':
             # Compute fit loss
             batch_u = batch_u.transpose(0, 1).to(device)  # transpose to time_first
             batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
-
-            batch_est_u = batch_u[:seq_est_len]
-            batch_est_y = batch_u[:seq_est_len]
-            batch_x0 = state_estimator(batch_est_u, batch_est_y)
 
             batch_est_u = batch_u[:seq_est_len]
             batch_est_y = batch_u[:seq_est_len]
@@ -126,13 +124,13 @@ if __name__ == '__main__':
             loss = torch.nn.functional.mse_loss(batch_y_fit, batch_y_sim)
 
             # Statistics
-            LOSS.append(loss.item())
+            ITER_LOSS.append(loss.item())
 
             # Optimize
             loss.backward()
             optimizer.step()
 
-            if itr % 10 == 0:
+            if itr % args.log_interval == 0:
                 print(f'Iteration {itr} | AE Loss {loss:.4f} ')
                 if args.dry_run:
                     break
@@ -152,7 +150,9 @@ if __name__ == '__main__':
     else:
         filename = "model.pt"
 
-    torch.save({"n_x": n_x,
+    torch.save({
+                "args": args,
+                "n_x": n_x,
                 "n_y": n_y,
                 "n_u": n_u,
                 "model": model.state_dict(),
@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
     #%% Test
     fig, ax = plt.subplots(1, 1)
-    ax.plot(LOSS, 'k', label='ALL')
+    ax.plot(ITER_LOSS, 'k', label='ALL')
     ax.grid(True)
     ax.legend()
     ax.set_ylabel("Loss (-)")

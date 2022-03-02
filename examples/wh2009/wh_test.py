@@ -1,6 +1,6 @@
 import os
 import torch
-from torchid.ss.dt.models import NeuralStateUpdate,  LinearOutput
+import torchid.ss.dt.models as models
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from torchid.ss.dt.estimators import LSTMStateEstimator
 from loader import wh2009_loader
@@ -15,16 +15,16 @@ if __name__ == '__main__':
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
     n_u = model_data["n_u"]
-    d_max = model_data["d_max"]
+    hidden_size = model_data["hidden_size"]
 
     # Load dataset
     t, u, y = wh2009_loader("test", scale=True)
 
     #%% Load models and parameters
-    f_xu = NeuralStateUpdate(n_x, n_u, d_max)
-    g_x = LinearOutput(n_x, n_y)
+    f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=hidden_size)
+    g_x = models.NeuralLinOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
-    state_estimator = LSTMStateEstimator(n_u=n_u, n_y=n_y, n_x=n_x, flipped=True)
+    # state_estimator = LSTMStateEstimator(n_u=n_u, n_y=n_y, n_x=n_x, flipped=True)
     model.load_state_dict(model_data["model"])
     #state_estimator.load_state_dict(model_data["estimator"])
 

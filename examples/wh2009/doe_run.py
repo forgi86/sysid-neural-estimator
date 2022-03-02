@@ -33,8 +33,8 @@ if __name__ == "__main__":
     doe_name = args.name
     df_plan = pd.read_csv(args.plan)
     df_plan.set_index("experiment_id", inplace=True)
-    log_dir = os.path.join("log", doe_name)
-    model_dir = os.path.join('model', doe_name)
+    log_dir = os.path.join("logs", doe_name)
+    model_dir = os.path.join('models', doe_name)
 
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)

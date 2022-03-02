@@ -121,7 +121,7 @@ class NeuralLinStateUpdate(nn.Module):
     Args:
         n_x (int): Number of state variables
         n_u (int): Number of input variables
-        n_feat: (int, optional): Number of input features in the hidden layer. Default: 0
+        hidden_size: (int, optional): Number of input features in the hidden layer. Default: 0
         init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
         activation: (str): Activation function in the hidden layer. Either 'relu', 'softplus', 'tanh'. Default: 'relu'
 
@@ -130,15 +130,15 @@ class NeuralLinStateUpdate(nn.Module):
         >>> ss_model = NeuralStateUpdate(n_x=2, n_u=1, hidden_size=64)
     """
 
-    def __init__(self, n_x, n_u, n_feat=16, init_small=True):
+    def __init__(self, n_x, n_u, hidden_size=16, init_small=True):
         super(NeuralLinStateUpdate, self).__init__()
         self.n_x = n_x
         self.n_u = n_u
-        self.n_feat = n_feat
+        self.hidden_size = hidden_size
         self.net = nn.Sequential(
-            nn.Linear(n_x + n_u, n_feat),  # 2 states, 1 input
+            nn.Linear(n_x + n_u, hidden_size),  # 2 states, 1 input
             nn.Tanh(),
-            nn.Linear(n_feat, n_x)
+            nn.Linear(hidden_size, n_x)
         )
         self.lin = nn.Linear(n_x + n_u, n_x, bias=False)
         self.nl_on = True
