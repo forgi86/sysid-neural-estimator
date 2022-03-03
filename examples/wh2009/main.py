@@ -71,7 +71,7 @@ if __name__ == '__main__':
     # CPU/GPU resources
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
-    # torch.set_num_threads(args.n_threads)
+    torch.set_num_threads(args.n_threads)
 
     # Constants
     n_x = 6
