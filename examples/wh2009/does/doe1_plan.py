@@ -7,12 +7,12 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     df_exp = build.full_fact(
-        {'lr': [1e-3, 1e-4],
+        {'lr': [1e-3],
          'epochs': [10000],
-         'max_time': [3600, 7200],
-         'batch_size': [128, 1024],
-         'seq_len': [40, 80, 1000],
-         'est_frac': [0.1, 0.5, 1.0],
+         'max_time': [600, 3600],
+         'batch_size': [1024],
+         'seq_len': [40, 80, 256],
+         'est_frac': [0.1, 0.6, 1.0],
          'est_direction': ["forward", "backward"],
          'est_type': ["LSTM", "FF"],
          'est_hidden_size': [8, 16, 32],
