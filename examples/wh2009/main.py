@@ -202,6 +202,10 @@ if __name__ == '__main__':
             },
                 os.path.join(args.save_folder, model_filename)
             )
+
+        if args.dry_run:
+            break
+
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
 
