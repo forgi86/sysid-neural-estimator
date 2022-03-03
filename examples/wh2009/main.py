@@ -88,8 +88,8 @@ if __name__ == '__main__':
     # %%  Prepare dataset, models, optimizer
     train_data = SubsequenceDataset(u_train, y_train, subseq_len=load_len)
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
-    u_val_t = torch.tensor(u_val[:, None, :])
-    y_val_t = torch.tensor(y_val[:, None, :])
+    u_val_t = torch.tensor(u_val[:, None, :]).to(device)
+    y_val_t = torch.tensor(y_val[:, None, :]).to(device)
 
     f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=args.hidden_size).to(device)
     g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=args.hidden_size).to(device)

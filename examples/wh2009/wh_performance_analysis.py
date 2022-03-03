@@ -5,12 +5,13 @@ import torchid.ss.dt.models as models
 import torchid.ss.dt.estimators as estimators
 from torchid.ss.dt.simulator import StateSpaceSimulator
 import matplotlib
-matplotlib.use("TKAgg")
+#matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
-    device = torch.device("gpu")
+    device = torch.device("cuda:0")
+    torch.set_num_threads(10)
 
     n_x = 6
     n_u = 1
