@@ -20,6 +20,7 @@ if __name__ == "__main__":
     df_exp.index.name = "experiment_id"
     df_exp["seed"] = np.random.permutation(df_exp.index)
 
+    df_exp = df_exp.sample(frac=1.0)
     df_exp.to_csv("experiment_plan.csv")
 
     n_exp = df_exp.shape[0]

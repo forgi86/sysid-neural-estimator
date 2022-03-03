@@ -1,4 +1,5 @@
 # python doe_run.py --plan experiment_plan.csv --name doe1 --n-threads 2 --no-cuda
+# python doe_run.py --plan experiment_plan.csv --name doe1 --n-threads 2 --no-cuda --no-run
 
 import pandas as pd
 import subprocess

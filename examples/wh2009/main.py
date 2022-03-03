@@ -1,5 +1,6 @@
 import os
 import time
+import numpy as np
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
@@ -120,9 +121,10 @@ if __name__ == '__main__':
         model_filename = f"model_{args.experiment_id}.pt"
     else:
         model_filename = "model.pt"
+    model_path = os.path.join(args.save_folder, model_filename)
 
     VAL_LOSS, TRAIN_LOSS = [], []
-    min_loss = torch.inf  # for early stopping
+    min_loss = np.inf  # for early stopping
 
     # %% Training loop
     itr = 0
@@ -200,7 +202,7 @@ if __name__ == '__main__':
                 "model": model.state_dict(),
                 "estimator": estimator.state_dict()
             },
-                os.path.join(args.save_folder, model_filename)
+                os.path.join(model_path)
             )
 
         if args.dry_run:
@@ -209,7 +211,7 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
 
-    if min_loss is torch.nan:
+    if not np.isfinite(min_loss):  # model never saved as it was never stable
         torch.save({
             "epoch": epoch,
             "args": args,
@@ -220,9 +222,19 @@ if __name__ == '__main__':
             "model": model.state_dict(),
             "estimator": estimator.state_dict()
         },
-            os.path.join("models", model_filename)
+            os.path.join(model_path)
         )
     # %% Simulate
+
+    # Also save total training time (up to last epoch)
+    model_data = torch.load(model_path)
+    model_data["total_time"] = time.time() - start_time
+    torch.save(model_data, model_path)
+
+    # Reload optimal parameters (best on validation)
+    model.load_state_dict(model_data["model"])
+    estimator.load_state_dict(model_data["estimator"])
+
     t_full, u_full, y_full = wh2009_loader("full", scale=True)
     with torch.no_grad():
         model.eval()
@@ -234,13 +246,13 @@ if __name__ == '__main__':
         y_sim = model(x0, u_v).squeeze(1).detach().numpy()
 
     # %% Metrics
-    from torchid import metrics
 
+    from torchid import metrics
     e_rms = 1000 * metrics.rmse(y_full, y_sim)[0]
     fit_idx = metrics.fit_index(y_full, y_sim)[0]
     r_sq = metrics.r_squared(y_full, y_sim)[0]
 
-    print(f"RMSE: {e_rms:.1f}mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
+    print(f"RMSE: {e_rms:.1f} mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
     # %% Plots
     if not args.no_figures:
