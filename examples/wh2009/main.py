@@ -21,7 +21,7 @@ if __name__ == '__main__':
                         help='experiment id (default: -1)')
     parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=3600, metavar='N',
+    parser.add_argument('--max_time', type=float, default=20, metavar='N',
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='batch size (default:64)')
@@ -134,6 +134,9 @@ if __name__ == '__main__':
         model.train()
         estimator.train()
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
+            if (time.time() - start_time) >= args.max_time:
+                break
+
             optimizer.zero_grad()
 
             # Compute fit loss
@@ -243,11 +246,11 @@ if __name__ == '__main__':
     with torch.no_grad():
         model.eval()
         estimator.eval()
-        u_v = torch.tensor(u_full[:, None, :])
-        y_v = torch.tensor(y_full[:, None, :])
+        u_v = torch.tensor(u_full[:, None, :]).to(device)
+        y_v = torch.tensor(y_full[:, None, :]).to(device)
         # x0 = estimator(u_v, y_v)
         x0 = torch.zeros((1, n_x), dtype=u_v.dtype, device=u_v.device)
-        y_sim = model(x0, u_v).squeeze(1).detach().numpy()
+        y_sim = model(x0, u_v).squeeze(1).to("cpu").detach().numpy()
 
     # %% Metrics
 
