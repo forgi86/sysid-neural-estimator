@@ -16,13 +16,13 @@ import argparse
 
 if __name__ == '__main__':
 
-    start_time = time.time()
-
     parser = argparse.ArgumentParser(description='Koopman spectrum estimation')
     parser.add_argument('--experiment_id', type=int, default=-1, metavar='N',
                         help='experiment id (default: -1)')
     parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 20000)')
+    parser.add_argument('--max_time', type=float, default=3600, metavar='N',
+                        help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='batch size (default:64)')
     parser.add_argument('--seq_len', type=int, default=80, metavar='N',
@@ -126,6 +126,7 @@ if __name__ == '__main__':
     VAL_LOSS, TRAIN_LOSS = [], []
     min_loss = np.inf  # for early stopping
 
+    start_time = time.time()
     # %% Training loop
     itr = 0
     for epoch in range(args.epochs):
@@ -206,6 +207,9 @@ if __name__ == '__main__':
             )
 
         if args.dry_run:
+            break
+
+        if (time.time() - start_time) >= args.max_time:
             break
 
     train_time = time.time() - start_time

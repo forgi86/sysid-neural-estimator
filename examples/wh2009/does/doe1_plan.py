@@ -8,9 +8,10 @@ if __name__ == "__main__":
 
     df_exp = build.full_fact(
         {'lr': [1e-3, 1e-4],
-         'epochs': [100, 500],
+         'epochs': [10000],
+         'max_time': [3600, 7200],
          'batch_size': [128, 1024],
-         'seq_len': [20, 80, 1000],
+         'seq_len': [40, 80, 1000],
          'est_frac': [0.1, 0.5, 1.0],
          'est_direction': ["forward", "backward"],
          'est_type': ["LSTM", "FF"],
