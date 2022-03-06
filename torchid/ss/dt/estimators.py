@@ -110,3 +110,18 @@ class FeedForwardStateEstimator(nn.Module):
 
         x_est = self.est_net(feat)
         return x_est
+
+
+class ZeroStateEstimator(nn.Module):
+    def __init__(self, n_u, n_y, n_x, batch_first=False):
+        super(ZeroStateEstimator, self).__init__()
+        self.n_u = n_u
+        self.n_y = n_y
+        self.n_x = n_x
+        self.batch_first = batch_first
+        self.dim_batch = 0 if self.batch_first else 1
+
+    def forward(self, u, y):
+        batch_size = u.shape[self.dim_batch]
+        x_est = torch.zeros((batch_size, self.n_x), dtype=u.dtype, device=u.device)
+        return x_est

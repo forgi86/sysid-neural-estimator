@@ -31,8 +31,8 @@ if __name__ == '__main__':
                         help='fraction of the subsequence used for initial state estimation')
     parser.add_argument('--est_direction', type=str, default="backward",
                         help='Estimate forward in time')
-    parser.add_argument('--est_type', type=str, default="LSTM",
-                        help='Estimator type. Possible values: LSTM|FF')
+    parser.add_argument('--est_type', type=str, default="ZERO",
+                        help='Estimator type. Possible values: LSTM|FF|ZERO')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
                         help='model: number of units per hidden layer (default: 64)')
     parser.add_argument('--hidden_size', type=int, default=15, metavar='N',
@@ -102,8 +102,10 @@ if __name__ == '__main__':
         estimator = estimators.FeedForwardStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
                                                          hidden_size=args.est_hidden_size,
                                                          seq_len=seq_est_len)
+    elif args.est_type == "ZERO":
+        estimator = estimators.ZeroStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x)
     else:
-        raise ValueError("Wrong estimator type. Possible values: LSTM|FF")
+        raise ValueError("Wrong estimator type. Possible values: LSTM|FF|ZERO")
 
     estimator = estimator.to(device)
 
