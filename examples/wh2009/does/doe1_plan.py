@@ -22,7 +22,7 @@ if __name__ == "__main__":
     df_exp["seed"] = np.random.permutation(df_exp.index)
 
     df_exp = df_exp.sample(frac=1.0)
-    df_exp.to_csv("experiment_plan.csv")
+    df_exp.to_csv("doe1_plan.csv")
 
     n_exp = df_exp.shape[0]
     print(f"Planned DOE with {n_exp} runs.")
