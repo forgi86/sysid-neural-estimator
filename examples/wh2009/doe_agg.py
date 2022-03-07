@@ -62,4 +62,4 @@ if __name__ == '__main__':
         #cnt += 1
         #if cnt == 5:
         #    break
-    df_res.to_csv("does", DOE_NAME + "_res.csv")
+    df_res.to_csv(os.path.join("does", DOE_NAME + "_res.csv"))
