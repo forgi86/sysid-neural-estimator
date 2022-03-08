@@ -13,8 +13,10 @@ if __name__ == '__main__':
 
     df_res = pd.read_csv(DOE_NAME + "_res.csv")  # doe1_res.csv
     df_res.sort_values(by="FIT", inplace=True, ascending=False)
+    df_res["FIT"] = df_res["FIT"].fillna(0.0)
+    df_res["RMSE"] = df_res["RMSE"].fillna(1000)
 
-    factors = ["max_time", "batch_size", "seq_len", "est_frac", "est_direction", "est_type", "est_hidden_size"]
+    factors = ["max_time", "seq_len", "est_frac", "est_direction", "est_type", "est_hidden_size"]
     response = "FIT"
     for factor in factors:
         df_res[factor] = df_res[factor].astype("category")
