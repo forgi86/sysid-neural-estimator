@@ -12,8 +12,8 @@ from torchid import metrics
 
 if __name__ == '__main__':
 
-    model_filename = "model.pt"
-    model_data = torch.load(os.path.join("models", model_filename))
+    model_data = torch.load(os.path.join("models", "model.pt"))
+    # model_data = torch.load(os.path.join("models", "doe1", "model_165.pt"))
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
     n_u = model_data["n_u"]

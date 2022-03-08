@@ -16,12 +16,15 @@ import argparse
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Koopman spectrum estimation')
+    # example parameters:
+    # --lr 0.001 --epochs 10000 --max_time 60 --batch_size 1024 --seq_len 80
+    # --est_frac 0.63 --est_direction forward --est_type FF --est_hidden_size 32
+    parser = argparse.ArgumentParser(description='State-space neural network tests')
     parser.add_argument('--experiment_id', type=int, default=-1, metavar='N',
                         help='experiment id (default: -1)')
     parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=300, metavar='N',
+    parser.add_argument('--max_time', type=float, default=60, metavar='N',
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='batch size (default:64)')
@@ -145,6 +148,7 @@ if __name__ == '__main__':
             batch_u = batch_u.transpose(0, 1).to(device)  # transpose to time_first
             batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
 
+            # State is estimated on the first seq_est_len samples
             batch_est_u = batch_u[:seq_est_len]
             batch_est_y = batch_y[:seq_est_len]
             batch_x0 = estimator(batch_est_u, batch_est_y)
@@ -210,6 +214,7 @@ if __name__ == '__main__':
             },
                 os.path.join(model_path)
             )
+            min_loss = val_loss
 
         if args.dry_run:
             break
@@ -220,7 +225,7 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
 
-    if not np.isfinite(min_loss):  # model never saved as it was never stable
+    if not np.isfinite(min_loss):  # model never saved as it was never giving a finite simulation loss
         torch.save({
             "epoch": epoch,
             "args": args,
@@ -228,6 +233,8 @@ if __name__ == '__main__':
             "n_x": n_x,
             "n_y": n_y,
             "n_u": n_u,
+            "TRAIN_LOSS": TRAIN_LOSS,
+            "VAL_LOSS": VAL_LOSS,
             "model": model.state_dict(),
             "estimator": estimator.state_dict()
         },

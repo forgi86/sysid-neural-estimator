@@ -26,7 +26,6 @@ if __name__ == '__main__':
                      x_vars=factors,
                      height=5, aspect=.5)
 
-
     #%% Draw a seaborn point plot onto each Axes
     g.map(sns.pointplot, scale=1.3)
     sns.despine(fig=g.fig, left=True)
