@@ -10,7 +10,7 @@ from torchid import metrics
 
 if __name__ == '__main__':
 
-    DOE_NAME = "doe1"
+    DOE_NAME = "doe2"
     df_plan = pd.read_csv(os.path.join("does", f"{DOE_NAME}_plan.csv"))  # doe1_plan.csv
     df_plan.set_index("experiment_id", inplace=True)
 
@@ -21,6 +21,9 @@ if __name__ == '__main__':
     # Load dataset
     t, u, y = wh2009_loader("test", scale=True)
     y_mean, y_std = wh2009_scaling()
+
+    torch.set_num_threads(4)
+
     u_v = torch.from_numpy(u[:, None, :])
     y_v = torch.from_numpy(y[:, None, :])
 
