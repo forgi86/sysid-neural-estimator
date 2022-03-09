@@ -16,7 +16,10 @@ if __name__ == '__main__':
 
     model_filename = "model.pt"
     #model_data = torch.load(os.path.join("models", model_filename))
-    model_data = torch.load(os.path.join("models", "doe1", "model_1.pt"))
+    #model_data = torch.load(os.path.join("models", "doe1", "model_1.pt"))
+    model_data = torch.load(os.path.join("models", "doe2", "model_1.pt"),
+                            map_location=torch.device('cpu'))
+
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
     n_u = model_data["n_u"]
@@ -50,8 +53,10 @@ if __name__ == '__main__':
         estimator = estimators.FeedForwardStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
                                                          hidden_size=args.est_hidden_size,
                                                          seq_len=seq_est_len)
+    elif args.est_type == "ZERO":
+        estimator = estimators.ZeroStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x)
     else:
-        raise ValueError("Wrong estimator type. Possible values: LSTM|FF")
+        raise ValueError("Wrong estimator type. Possible values: LSTM|FF|ZERO")
 
     model.load_state_dict(model_data["model"])
     estimator.load_state_dict(model_data["estimator"])
