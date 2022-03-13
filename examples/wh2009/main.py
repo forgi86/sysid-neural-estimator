@@ -30,7 +30,7 @@ if __name__ == '__main__':
                         help='batch size (default:64)')
     parser.add_argument('--seq_len', type=int, default=80, metavar='N',
                         help='length of the training sequences (default: 20000)')
-    parser.add_argument('--seq_est_len', type=int, default=90, metavar='N',
+    parser.add_argument('--seq_est_len', type=int, default=50, metavar='N',
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--est_frac', type=float, default=None, metavar='N',
                         help='fraction of the subsequence used for initial state estimation')
@@ -160,9 +160,9 @@ if __name__ == '__main__':
             batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
 
             # State is estimated on the first seq_est_len samples
-            batch_est_u = batch_u[:seq_est_len]
-            batch_est_y = batch_y[:seq_est_len]
-            batch_x0 = estimator(batch_est_u, batch_est_y)
+            batch_u_est = batch_u[:seq_est_len]
+            batch_y_est = batch_y[:seq_est_len]
+            batch_x0 = estimator(batch_u_est, batch_y_est)
 
             if backward_est:
                 # fit on the whole dataset
