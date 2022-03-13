@@ -14,11 +14,12 @@ from torchid import metrics
 
 if __name__ == '__main__':
 
-    model_filename = "model.pt"
-    #model_data = torch.load(os.path.join("models", model_filename))
+    model_data = torch.load(os.path.join("models", "model.pt"))
     #model_data = torch.load(os.path.join("models", "doe1", "model_1.pt"))
-    model_data = torch.load(os.path.join("models", "doe2", "model_1.pt"),
-                            map_location=torch.device('cpu'))
+    #model_data = torch.load(os.path.join("models", "doe2", "model_1.pt"), map_location=torch.device('cpu'))
+    #model_data = torch.load(os.path.join("models", "doe2", "model_123.pt"), map_location=torch.device('cpu'))  # best
+    # model_data = torch.load(os.path.join("models", "doe2", "model_276.pt"), map_location=torch.device('cpu'))  # worst
+    #model_data = torch.load(os.path.join("models", "doe2", "model_169.pt"), map_location=torch.device('cpu'))  # short lstm
 
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
@@ -26,9 +27,16 @@ if __name__ == '__main__':
     args = model_data["args"]
 
     # Derived parameters
-    seq_est_len = int(args.seq_len * args.est_frac)
+    if "est_frac" in args and args.est_frac is not None:
+        seq_est_len = int(args.seq_len * args.est_frac)
+
+    if "seq_est_len" in args and args.seq_est_len is not None:
+        seq_est_len = args.seq_est_len
     backward_est = True if args.est_direction == "backward" else False
-    load_len = args.seq_len if backward_est else args.seq_len + seq_est_len
+    if backward_est:
+        load_len = max(args.seq_len, seq_est_len)
+    else:
+        load_len = args.seq_len + seq_est_len
 
     estimate_state = True #False
 
@@ -78,12 +86,12 @@ if __name__ == '__main__':
 
             if backward_est:
                 # fit on the whole dataset
-                batch_u_fit = batch_u
-                batch_y_fit = batch_y
+                batch_u_fit = batch_u[:args.seq_len]
+                batch_y_fit = batch_y[:args.seq_len]
             else:
                 # fit only after seq_est_len
-                batch_u_fit = batch_u[seq_est_len:]
-                batch_y_fit = batch_y[seq_est_len:]
+                batch_u_fit = batch_u[seq_est_len:seq_est_len+args.seq_len]
+                batch_y_fit = batch_y[seq_est_len:seq_est_len++args.seq_len]
 
             batch_y_sim = model(batch_x0, batch_u_fit)
 
