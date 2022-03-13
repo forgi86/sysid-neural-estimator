@@ -11,10 +11,10 @@ if __name__ == "__main__":
          'epochs': [10000],
          'max_time': [300, 1800],
          'batch_size': [128, 1024],
-         'seq_len': [40, 80, 160],
-         'seq_est_len': [25, 50, 100],
+         'seq_len': [40, 80, 256],
+         'seq_est_len': [6, 50, 100],
          'est_direction': ["forward"],
-         'est_type': ["LSTM", "FF"],  #, "ZERO"],
+         'est_type': ["LSTM", "FF", "ZERO"],
          'est_hidden_size': [15],
          }
     )
