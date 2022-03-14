@@ -7,7 +7,7 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     df_exp = build.full_fact(
-        {'lr': [1e-3],
+        {'lr': [1e-4, 1e-3],
          'epochs': [10000],
          'max_time': [300, 3600],
          'batch_size': [128, 1024],
