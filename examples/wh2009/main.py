@@ -225,7 +225,7 @@ if __name__ == '__main__':
             },
                 os.path.join(model_path)
             )
-            min_loss = val_loss
+            min_loss = val_loss.item()
 
         if args.dry_run:
             break
@@ -236,7 +236,7 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
 
-    if not torch.isfinite(min_loss):  # model never saved as it was never giving a finite simulation loss
+    if not np.isfinite(min_loss):  # model never saved as it was never giving a finite simulation loss
         torch.save({
             "epoch": epoch,
             "args": args,
