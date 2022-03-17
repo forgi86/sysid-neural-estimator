@@ -10,26 +10,25 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
-    device = torch.device("cuda:0")
+    #device = torch.device("cuda:0")
+    device = torch.device("cpu")
     torch.set_num_threads(10)
 
     n_x = 6
     n_u = 1
     n_y = 1
-    batch_size = 64
-    seq_len = 64
-    seq_est_len = seq_len  # 16
+    seq_est_len = 50
 
     #%% Load models and parameters
-    f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=16).to(device)
-    g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=16).to(device)
+    f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=15).to(device)
+    g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=15).to(device)
     model = StateSpaceSimulator(f_xu, g_x).to(device)
     estimator = estimators.LSTMStateEstimator(n_u=n_y, n_y=n_y,
                                               n_x=n_x, hidden_size=16,
                                               flipped=True).to(device)
 
-    SEQ_LEN = [16, 32, 64, 128, 256, 512, 1024]
-    BATCH_SIZE = [1, 32, 64, 128, 512, 1024]
+    SEQ_LEN = [80, 160]  #[32, 64, 128, 256]
+    BATCH_SIZE = [1, 128, 1024, 2048, 4096, 8192]
     TIME = np.empty((len(SEQ_LEN), len(BATCH_SIZE)))
     PROCESSED_SAMPLES = np.empty((len(SEQ_LEN), len(BATCH_SIZE)))
     for i, seq_len in enumerate(SEQ_LEN):
@@ -58,7 +57,7 @@ if __name__ == '__main__':
 
             time_proc = time.time() - time_start
             TIME[i, j] = time_proc
-            print(i, j, time_proc)
+            print(f"seq len {SEQ_LEN[i]}, batch size {BATCH_SIZE[j]} processing time {time_proc:.2f}")
 
     SAMPLES_SEC = PROCESSED_SAMPLES/TIME
 

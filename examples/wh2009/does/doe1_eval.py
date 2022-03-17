@@ -45,12 +45,7 @@ if __name__ == '__main__':
     g.map(sns.pointplot, scale=1.3)
     sns.despine(fig=g.fig, left=True)
 
-    g = sns.PairGrid(df_good, y_vars=response,
-                     x_vars=factors,
-                     height=5, aspect=.5)
-
     #%%
-    plt.figure()
     g = sns.PairGrid(df_good, y_vars=response,
                      x_vars=factors,
                      height=5, aspect=.5)

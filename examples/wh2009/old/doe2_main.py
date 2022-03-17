@@ -30,19 +30,17 @@ if __name__ == '__main__':
                         help='batch size (default:64)')
     parser.add_argument('--seq_len', type=int, default=80, metavar='N',
                         help='length of the training sequences (default: 20000)')
-    parser.add_argument('--seq_est_len', type=int, default=50, metavar='N',
-                        help='length of the training sequences (default: 20000)')
-    parser.add_argument('--est_frac', type=float, default=None, metavar='N',
+    parser.add_argument('--est_frac', type=float, default=0.63, metavar='N',
                         help='fraction of the subsequence used for initial state estimation')
-    parser.add_argument('--est_direction', type=str, default="forward",
+    parser.add_argument('--est_direction', type=str, default="backward",
                         help='Estimate forward in time')
-    parser.add_argument('--est_type', type=str, default="LSTM",
+    parser.add_argument('--est_type', type=str, default="ZERO",
                         help='Estimator type. Possible values: LSTM|FF|ZERO')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
                         help='model: number of units per hidden layer (default: 64)')
     parser.add_argument('--hidden_size', type=int, default=15, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
-    parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
+    parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 1e-4)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
@@ -65,23 +63,14 @@ if __name__ == '__main__':
     torch.manual_seed(args.seed)
 
     # Derived parameters
-    if "est_frac" in args and args.est_frac is not None:
-        seq_est_len = int(args.seq_len * args.est_frac)
-
-    if "seq_est_len" in args and args.seq_est_len is not None:
-        seq_est_len = args.seq_est_len
-
+    seq_est_len = int(args.seq_len * args.est_frac)
     if args.est_direction == "backward":
         backward_est = True
     elif args.est_direction == "forward":
         backward_est = False
     else:
         raise ValueError("Wrong estimator direction. Possible values: backward|forward")
-
-    if backward_est:
-        load_len = max(args.seq_len, seq_est_len)
-    else:
-        load_len = args.seq_len + seq_est_len
+    load_len = args.seq_len if backward_est else args.seq_len + seq_est_len
 
     # CPU/GPU resources
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -160,18 +149,18 @@ if __name__ == '__main__':
             batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
 
             # State is estimated on the first seq_est_len samples
-            batch_u_est = batch_u[:seq_est_len]
-            batch_y_est = batch_y[:seq_est_len]
-            batch_x0 = estimator(batch_u_est, batch_y_est)
+            batch_est_u = batch_u[:seq_est_len]
+            batch_est_y = batch_y[:seq_est_len]
+            batch_x0 = estimator(batch_est_u, batch_est_y)
 
             if backward_est:
                 # fit on the whole dataset
-                batch_u_fit = batch_u[:args.seq_len]
-                batch_y_fit = batch_y[:args.seq_len]
+                batch_u_fit = batch_u
+                batch_y_fit = batch_y
             else:
                 # fit only after seq_est_len
-                batch_u_fit = batch_u[seq_est_len:seq_est_len+args.seq_len]
-                batch_y_fit = batch_y[seq_est_len:seq_est_len+args.seq_len]
+                batch_u_fit = batch_u[seq_est_len:]
+                batch_y_fit = batch_y[seq_est_len:]
 
             batch_y_sim = model(batch_x0, batch_u_fit)
 
@@ -225,7 +214,7 @@ if __name__ == '__main__':
             },
                 os.path.join(model_path)
             )
-            min_loss = val_loss.item()
+            min_loss = val_loss
 
         if args.dry_run:
             break
@@ -236,7 +225,7 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
 
-    if not np.isfinite(min_loss):  # model never saved as it was never giving a finite simulation loss
+    if not torch.isfinite(min_loss):  # model never saved as it was never giving a finite simulation loss
         torch.save({
             "epoch": epoch,
             "args": args,

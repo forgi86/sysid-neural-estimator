@@ -14,8 +14,11 @@ if __name__ == '__main__':
 
     # model_data = torch.load(os.path.join("models", "model.pt"))
     # model_data = torch.load(os.path.join("models", "doe1", "model_165.pt"))
-    model_data = torch.load(os.path.join("models", "doe2", "model_1.pt"),
-                            map_location=torch.device('cpu'))
+    # model_data = torch.load(os.path.join("models", "doe2", "model_1.pt"), map_location=torch.device('cpu'))
+
+    model_data = torch.load(os.path.join("models", "doe2", "model_123.pt"), map_location=torch.device('cpu'))  # best
+    # model_data = torch.load(os.path.join("models", "doe2", "model_276.pt"), map_location=torch.device('cpu'))  # worst
+
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
     n_u = model_data["n_u"]
@@ -38,7 +41,8 @@ if __name__ == '__main__':
         u_v = torch.tensor(u[:, None, :])
         y_v = torch.tensor(y[:, None, :])
         # x0 = estimator(u_v, y_v)
-        x0 = torch.zeros((1, n_x), dtype=u_v.dtype, device=u_v.device)  # initial state set to 0 for simplicity
+        # initial state here set to 0 for simplicity. The effect on the long simulation is negligible
+        x0 = torch.zeros((1, n_x), dtype=u_v.dtype, device=u_v.device)
         y_sim = model(x0, u_v).squeeze(1)  # remove batch dimension
     y_sim = y_sim.detach().numpy()
 
@@ -51,6 +55,11 @@ if __name__ == '__main__':
     ax.grid(True)
     ax.plot(y_sim[:, 0], 'b', label='sim')
     ax.plot(y[:, 0] - y_sim[:, 0], 'r', label='sim')
+
+    #%%
+    plt.figure()
+    plt.plot(model_data["TRAIN_LOSS"], 'b')
+    plt.plot(model_data["VAL_LOSS"], 'r')
 
     #%% Metrics
 
