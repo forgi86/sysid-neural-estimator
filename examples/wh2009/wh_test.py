@@ -16,8 +16,9 @@ if __name__ == '__main__':
     # model_data = torch.load(os.path.join("models", "doe1", "model_165.pt"))
     # model_data = torch.load(os.path.join("models", "doe2", "model_1.pt"), map_location=torch.device('cpu'))
 
-    model_data = torch.load(os.path.join("models", "doe2", "model_123.pt"), map_location=torch.device('cpu'))  # best
+    # model_data = torch.load(os.path.join("models", "doe2", "model_123.pt"), map_location=torch.device('cpu'))  # best
     # model_data = torch.load(os.path.join("models", "doe2", "model_276.pt"), map_location=torch.device('cpu'))  # worst
+    model_data = torch.load(os.path.join("models", "doe3", "model_34.pt"), map_location=torch.device('cpu'))  # best
 
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
