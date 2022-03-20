@@ -100,7 +100,7 @@ if __name__ == '__main__':
     t_val, u_val, y_val = t_train[n_fit:] - t_train[n_fit], u_train[n_fit:], y_train[n_fit:]
 
     # %%  Prepare dataset, models, optimizer
-    train_data = SubsequenceDataset(u_train, y_train, subseq_len=load_len)
+    train_data = SubsequenceDataset(u_fit, y_fit, subseq_len=load_len)
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     u_val_t = torch.tensor(u_val[:, None, :]).to(device)
     y_val_t = torch.tensor(y_val[:, None, :]).to(device)
