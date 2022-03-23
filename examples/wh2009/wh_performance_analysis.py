@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
-    #device = torch.device("cuda:0")
-    device = torch.device("cpu")
+    device = torch.device("cuda:0")
+    #device = torch.device("cpu")
     torch.set_num_threads(10)
 
     n_x = 6
