@@ -24,7 +24,7 @@ if __name__ == '__main__':
                         help='experiment id (default: -1)')
     parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=60, metavar='N',
+    parser.add_argument('--max_time', type=float, default=300, metavar='N',
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='batch size (default:64)')
@@ -34,7 +34,7 @@ if __name__ == '__main__':
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--est_direction', type=str, default="forward",
                         help='Estimate forward in time')
-    parser.add_argument('--est_type', type=str, default="RAND",
+    parser.add_argument('--est_type', type=str, default="FF",
                         help='Estimator type. Possible values: LSTM|FF|ZERO|RAND')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
                         help='model: number of units per hidden layer (default: 64)')

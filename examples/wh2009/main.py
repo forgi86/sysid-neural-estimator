@@ -155,9 +155,9 @@ if __name__ == '__main__':
 
             optimizer.zero_grad()
 
-            # Compute fit loss
-            batch_u = batch_u.transpose(0, 1).to(device)  # transpose to time_first
-            batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
+            # transpose to time_first
+            batch_u = batch_u.transpose(0, 1).to(device)
+            batch_y = batch_y.transpose(0, 1).to(device)
 
             # State is estimated on the first seq_est_len samples
             batch_u_est = batch_u[:seq_est_len]
