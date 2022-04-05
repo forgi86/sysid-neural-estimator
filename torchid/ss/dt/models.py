@@ -322,3 +322,34 @@ class ChannelsOutput(nn.Module):
     def forward(self, x):
         y = x[..., self.channels]
         return y
+
+
+class MechanicalStateSpaceSystem(nn.Module):
+
+    def __init__(self, n_dof=6, n_feat=64, init_small=True):
+        super(MechanicalStateSpaceSystem, self).__init__()
+        self.n_feat = n_feat
+        self.n_dof = n_dof
+
+        self.net = nn.Sequential(
+            nn.Linear(2*self.n_dof + self.n_dof, n_feat),  # inputs: position, velocities, torques (fully actuated)
+            nn.ReLU(),
+            nn.Linear(self.n_feat, self.n_dof)
+        )
+
+        # Small initialization is better for multi-step methods
+        if init_small:
+            for m in self.net.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, mean=0, std=1e-3)
+                    nn.init.constant_(m.bias, val=0)
+
+    def forward(self, in_x, in_u):
+
+        in_xu = torch.cat((in_x, in_u), -1)  # concatenate x and u over the last dimension to create the [xu] input
+        dx_v = self.net(in_xu)  # \dot v = f(q,v,u)
+
+        list_dx = [in_x[..., self.n_dof:], dx_v]
+        dx = torch.cat(list_dx, -1)  # dot x = v, dot v = net
+        return dx
+
