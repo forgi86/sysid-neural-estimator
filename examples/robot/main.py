@@ -1,31 +1,231 @@
 import os
 import numpy as np
-import pandas as pd
-import scipy
-import scipy.io as sio
+import torch
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchid.datasets import SubsequenceDataset
+import torchid.ss.dt.models as models
+import torchid.ss.dt.estimators as estimators
+from loader import robot_loader
+from torchid.ss.dt.simulator import StateSpaceSimulator
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-data_folder = "Robot_Identification_Benchmark_Without_Raw_Data"
-data_file = "forward_identification_without_raw_data.mat"
+import argparse
+import time
 
 if __name__ == "__main__":
-    data = sio.loadmat(os.path.join("data", data_folder, data_file))
-    t = data["time_train"].ravel()
-    u = data["u_train"].transpose()
-    y = data["y_train"].transpose()
 
-    ts = np.median(np.diff(t))
-    ny = y.shape[1]
-    nx = 2*ny
+    # example parameters:
+    # --lr 0.001 --epochs 10000 --max_time 60 --batch_size 1024 --seq_len 80
+    # --est_frac 0.63 --est_direction forward --est_type FF --est_hidden_size 32
+    parser = argparse.ArgumentParser(description='State-space neural network tests')
+    parser.add_argument('--experiment_id', type=int, default=-1, metavar='N',
+                        help='experiment id (default: -1)')
+    parser.add_argument('--epochs', type=int, default=100, metavar='N',
+                        help='number of epochs to train (default: 20000)')
+    parser.add_argument('--max_time', type=float, default=300, metavar='N',
+                        help='maximum training time in seconds (default:3600)')
+    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
+                        help='batch size (default:64)')
+    parser.add_argument('--seq_len', type=int, default=80, metavar='N',
+                        help='length of the training sequences (default: 20000)')
+    parser.add_argument('--hidden_size', type=int, default=15, metavar='N',
+                        help='estimator: number of units per hidden layer (default: 64)')
+    parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
+                        help='learning rate (default: 1e-4)')
+    parser.add_argument('--seed', type=int, default=1, metavar='S',
+                        help='random seed (default: 1)')
+    parser.add_argument('--dry-run', action='store_true', default=False,
+                        help='quickly check a single pass')
+    parser.add_argument('--save-folder', type=str, default="models", metavar='S',
+                        help='save folder (default: "model")')
 
-    # Banal velocity computation
-    v = np.r_[np.zeros((1, ny)), np.diff(y, axis=0)/ts]
-    fig, ax = plt.subplots()
-    plt.figure()
-    plt.plot(t, u)
+    parser.add_argument('--n-threads', type=int, default=2,
+                        help='number of CPU threads')
+    parser.add_argument('--no-cuda', action='store_true', default=False,
+                        help='disables CUDA training')
+    parser.add_argument('--log-interval', type=int, default=20,
+                        help='log interval')
+    parser.add_argument('--no-figures', action='store_true', default=False,
+                        help='Plot figures')
 
-    fig, ax = plt.subplots(3, ny, sharex=True)
-    for i in range(ny):
-        ax[0, i].plot(t, y[:, i])
-        ax[1, i].plot(t, v[:, i])
-        ax[2, i].plot(t, u[:, i])
+    args = parser.parse_args()
+
+    torch.manual_seed(args.seed)
+
+    # CPU/GPU resources
+    use_cuda = not args.no_cuda and torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+    torch.set_num_threads(args.n_threads)
+
+    # Constants
+    n_x = 12
+    n_u = 1
+    n_y = 1
+    n_fit = 30000
+
+    # %% Load dataset
+    t_train, u_train, y_train = robot_loader("train", scale=True)
+    t_fit, u_fit, y_fit = t_train[:n_fit], u_train[:n_fit], y_train[:n_fit]
+    t_val, u_val, y_val = t_train[n_fit:] - t_train[n_fit], u_train[n_fit:], y_train[n_fit:]
+
+    # %%  Prepare dataset, models, optimizer
+    train_data = SubsequenceDataset(u_fit, y_fit, subseq_len=args.seq_len)
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
+    u_val_t = torch.tensor(u_val[:, None, :]).to(device)
+    y_val_t = torch.tensor(y_val[:, None, :]).to(device)
+
+    f_xu = models.MechanicalStateSpaceSystem(n_dof=6, hidden_size=args.hidden_size).to(device)
+    model = StateSpaceSimulator(f_xu, g_x=None).to(device)
+
+    # Setup optimizer
+    optimizer = optim.Adam([
+        {'params': model.parameters(), 'lr': args.lr},
+    ], lr=args.lr)
+
+    # %% Other initializations
+    if not os.path.exists(args.save_folder):
+        os.makedirs(args.save_folder)
+
+    if args.experiment_id >= 0:
+        model_filename = f"model_{args.experiment_id}.pt"
+    else:
+        model_filename = "model.pt"
+    model_path = os.path.join(args.save_folder, model_filename)
+
+    VAL_LOSS, TRAIN_LOSS = [], []
+    min_loss = np.inf  # for early stopping
+
+    start_time = time.time()
+    # %% Training loop
+    itr = 0
+    for epoch in range(args.epochs):
+        train_loss = 0  # train loss for the whole epoch
+        model.train()
+        for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
+            if (time.time() - start_time) >= args.max_time:
+                break
+
+            optimizer.zero_grad()
+
+            # Compute fit loss
+            batch_u = batch_u.transpose(0, 1).to(device)  # transpose to time_first
+            batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
+            batch_x0 = batch_y[0, :, :].squeeze(0)
+            batch_y_sim = model(batch_x0, batch_u)
+
+            loss = torch.nn.functional.mse_loss(batch_y, batch_y_sim)
+            train_loss += loss.item()
+
+            # ITR_LOSS.append(loss.item())
+
+            # Optimize
+            loss.backward()
+            optimizer.step()
+
+            if args.dry_run:
+                break
+
+            itr += 1
+
+        train_loss = train_loss / len(train_loader)
+        TRAIN_LOSS.append(train_loss)
+
+        # Validation loss: full simulation error
+        with torch.no_grad():
+            model.eval()
+            x0 = torch.zeros((1, n_x), dtype=u_val_t.dtype,
+                             device=u_val_t.device)
+            # x0 = state_estimator(u_val_t, y_val_t)
+            y_val_sim = model(x0, u_val_t)
+            val_loss = torch.nn.functional.mse_loss(y_val_t, y_val_sim)
+
+        VAL_LOSS.append(val_loss.item())
+        print(f'==== Epoch {epoch} | Train Loss {train_loss:.4f} Val (sim) Loss {val_loss:.4f} ====')
+
+        # best model so far, save it
+        if val_loss < min_loss:
+            torch.save({
+                "epoch": epoch,
+                "args": args,
+                "time": time.time() - start_time,
+                "n_x": n_x,
+                "n_y": n_y,
+                "n_u": n_u,
+                "TRAIN_LOSS": TRAIN_LOSS,
+                "VAL_LOSS": VAL_LOSS,
+                "model": model.state_dict(),
+            },
+                os.path.join(model_path)
+            )
+            min_loss = val_loss.item()
+
+        if args.dry_run:
+            break
+
+        if (time.time() - start_time) >= args.max_time:
+            break
+
+    train_time = time.time() - start_time
+    print(f"\nTrain time: {train_time:.2f}")
+
+    if not np.isfinite(min_loss):  # model never saved as it was never giving a finite simulation loss
+        torch.save({
+            "epoch": epoch,
+            "args": args,
+            "time": time.time() - start_time,
+            "n_x": n_x,
+            "n_y": n_y,
+            "n_u": n_u,
+            "TRAIN_LOSS": TRAIN_LOSS,
+            "VAL_LOSS": VAL_LOSS,
+            "model": model.state_dict(),
+            #"estimator": estimator.state_dict()
+        },
+            os.path.join(model_path)
+        )
+    # %% Simulate
+
+    # Also save total training time (up to last epoch)
+    model_data = torch.load(model_path)
+    model_data["total_time"] = time.time() - start_time
+    torch.save(model_data, model_path)
+
+    # Reload optimal parameters (best on validation)
+    model.load_state_dict(model_data["model"])
+    #estimator.load_state_dict(model_data["estimator"])
+
+    t_full, u_full, y_full = robot_loader("test", scale=True)
+    with torch.no_grad():
+        model.eval()
+        #estimator.eval()
+        u_v = torch.tensor(u_full[:, None, :]).to(device)
+        y_v = torch.tensor(y_full[:, None, :]).to(device)
+        # x0 = estimator(u_v, y_v)
+        x0 = torch.zeros((1, n_x), dtype=u_v.dtype, device=u_v.device)
+        y_sim = model(x0, u_v).squeeze(1).to("cpu").detach().numpy()
+
+    # %% Metrics
+
+    from torchid import metrics
+    e_rms = metrics.rmse(y_full, y_sim)[0]
+    fit_idx = metrics.fit_index(y_full, y_sim)[0]
+    r_sq = metrics.r_squared(y_full, y_sim)[0]
+
+    print(f"RMSE: {e_rms:.1f} mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
+
+    # %% Plots
+    if not args.no_figures:
+        fig, ax = plt.subplots(1, 1)
+        ax.plot(TRAIN_LOSS, 'k', label='TRAIN')
+        ax.plot(VAL_LOSS, 'r', label='VAL')
+        ax.grid(True)
+        ax.legend()
+        ax.set_ylabel("Loss (-)")
+        ax.set_xlabel("Iteration (-)")
+
+        fig, ax = plt.subplots(1, 1, sharex=True)
+        ax.plot(y_full[:, 0], 'k', label='meas')
+        ax.grid(True)
+        ax.plot(y_sim[:, 0], 'b', label='sim')
