@@ -24,17 +24,18 @@ def pick_place_loader(scale=True, dtype=np.float32):
 
 def pick_place_scaling():
     data = sio.loadmat(os.path.join("data", data_file))
-    u_train = data["u_train"].transpose()
+    u_train = data["u"].transpose()
     u_mean, u_std = np.mean(u_train, axis=0), np.std(u_train, axis=0)
     return u_mean, u_std
 
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    t, u, y = pick_place_loader(scale=False)
+    t, u, y = pick_place_loader(scale=True)
     ts = np.median(np.diff(t, axis=0))
     v = np.r_[[[0]], np.diff(y, axis=0)/ts]
     fig, ax = plt.subplots(3, 1, sharex=True)
     ax[0].plot(t, u)
     ax[1].plot(t, y)
     ax[2].plot(t, v)
+    plt.show()

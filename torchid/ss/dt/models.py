@@ -340,6 +340,8 @@ class MechanicalStateSpaceSystem(nn.Module):
             nn.Linear(self.hidden_size, self.n_dof)
         )
 
+        self.lin = nn.Linear(2*self.n_dof + self.n_dof, self.n_dof)
+
         # Small initialization is better for multi-step methods
         if init_small:
             for m in self.net.modules():
@@ -347,13 +349,17 @@ class MechanicalStateSpaceSystem(nn.Module):
                     nn.init.normal_(m.weight, mean=0, std=1e-3)
                     nn.init.constant_(m.bias, val=0)
 
+            for m in self.lin.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, mean=0, std=1e-3)
+
     def forward(self, x, u):
 
         # concatenate x and u over the last dimension to create the xu network input
         xu = torch.cat((x, u), -1)
 
         dq = self.ts * x[..., self.n_dof:]  # \dot q = v
-        dv = self.net(xu)  # \dot v = net(q,v,u)
+        dv = self.lin(xu) + self.net(xu)  # \dot v = net(q,v,u)
         dx = torch.cat([dq, dv], -1)
         return dx
 
