@@ -326,14 +326,15 @@ class ChannelsOutput(nn.Module):
 
 class MechanicalStateSpaceSystem(nn.Module):
     """ Model of a fully-actuated mechanical system"""
-    def __init__(self, n_dof=7, hidden_size=64, init_small=True):
+    def __init__(self, n_dof=7, hidden_size=64, ts=1.0, init_small=True):
         super(MechanicalStateSpaceSystem, self).__init__()
         self.hidden_size = hidden_size
         self.n_dof = n_dof
+        self.ts = ts
 
         self.net = nn.Sequential(
             nn.Linear(2*self.n_dof + self.n_dof, hidden_size),  # inputs: position, velocities, torques (fully actuated)
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(self.hidden_size, self.n_dof)
         )
 
@@ -349,7 +350,7 @@ class MechanicalStateSpaceSystem(nn.Module):
         # concatenate x and u over the last dimension to create the xu network input
         xu = torch.cat((x, u), -1)
 
-        dq = x[..., self.n_dof:]  # \dot q = v
+        dq = self.ts * x[..., self.n_dof:]  # \dot q = v
         dv = self.net(xu)  # \dot v = net(q,v,u)
         dx = torch.cat([dq, dv], -1)
         return dx

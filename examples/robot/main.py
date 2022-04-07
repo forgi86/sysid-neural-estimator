@@ -23,16 +23,16 @@ if __name__ == "__main__":
                         help='experiment id (default: -1)')
     parser.add_argument('--epochs', type=int, default=1000, metavar='N',
                         help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=600, metavar='N',
+    parser.add_argument('--max_time', type=float, default=3600, metavar='N',
                         help='maximum training time in seconds (default:3600)')
-    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=128, metavar='N',
                         help='batch size (default:64)')
-    parser.add_argument('--seq_len', type=int, default=128, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=100, metavar='N',
                         help='length of the training sequences (default: 20000)')
-    parser.add_argument('--hidden_size', type=int, default=50, metavar='N',
+    parser.add_argument('--hidden_size', type=int, default=64, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
-    parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
-                        help='learning rate (default: 1e-4)')
+    parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
+                        help='learning rate (default: 1e-3)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
     parser.add_argument('--dry-run', action='store_true', default=False,
