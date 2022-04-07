@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("TKAgg")
 
 # Column names in the dataset
 COL_F = ['fs']

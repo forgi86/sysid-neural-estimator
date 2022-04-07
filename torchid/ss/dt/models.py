@@ -335,6 +335,8 @@ class MechanicalStateSpaceSystem(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(2*self.n_dof + self.n_dof, hidden_size),  # inputs: position, velocities, torques (fully actuated)
             nn.Tanh(),
+            nn.Linear(self.hidden_size, self.hidden_size),
+            nn.Tanh(),
             nn.Linear(self.hidden_size, self.n_dof)
         )
 
@@ -355,3 +357,34 @@ class MechanicalStateSpaceSystem(nn.Module):
         dx = torch.cat([dq, dv], -1)
         return dx
 
+
+class AMechanicalStateSpaceSystem(nn.Module):
+    """ Model of a fully-actuated mechanical system"""
+    def __init__(self, n_dof=7, hidden_size=64, ts=1.0, init_small=True):
+        super(AMechanicalStateSpaceSystem, self).__init__()
+        self.hidden_size = hidden_size
+        self.n_dof = n_dof
+        self.ts = ts
+
+        self.net = nn.Sequential(
+            nn.Linear(2*self.n_dof + self.n_dof, hidden_size),  # inputs: position, velocities, torques (fully actuated)
+            nn.Tanh(),
+            nn.Linear(self.hidden_size, self.n_dof)
+        )
+
+        # Small initialization is better for multi-step methods
+        if init_small:
+            for m in self.net.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, mean=0, std=1e-3)
+                    nn.init.constant_(m.bias, val=0)
+
+    def forward(self, x, u):
+
+        # concatenate x and u over the last dimension to create the xu network input
+        xu = torch.cat((x, u), -1)
+
+        dq = self.ts * x[..., self.n_dof:]  # \dot q = v
+        dv = self.net(xu)  # \dot v = net(q,v,u)
+        dx = torch.cat([dq, dv], -1)
+        return dx
