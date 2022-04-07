@@ -16,17 +16,20 @@ def pick_place_loader(scale=True, dtype=np.float32):
     y = data["y"]
 
     if scale:
-        u_mean, u_std = pick_place_scaling()
+        u_mean, u_std, y_mean, y_std = pick_place_scaling()
         u = (u - u_mean)/u_std
+        y = (y - y_mean)/y_std
 
     return t.astype(dtype), u.astype(dtype), y.astype(dtype)
 
 
 def pick_place_scaling():
     data = sio.loadmat(os.path.join("data", data_file))
-    u_train = data["u"].transpose()
-    u_mean, u_std = np.mean(u_train, axis=0), np.std(u_train, axis=0)
-    return u_mean, u_std
+    u = data["u"]
+    y = data["y"]
+    u_mean, u_std = np.mean(u, axis=0), np.std(u, axis=0)
+    y_mean, y_std = np.mean(y, axis=0), np.std(y, axis=0)
+    return u_mean, u_std, y_mean, y_std
 
 
 if __name__ == "__main__":
