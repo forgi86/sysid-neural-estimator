@@ -5,11 +5,10 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
 import torchid.ss.dt.models as models
-import torchid.ss.dt.estimators as estimators
 from loader import robot_loader
 from torchid.ss.dt.simulator import StateSpaceSimulator
 import matplotlib
-matplotlib.use("Agg")
+matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
 import argparse
 import time
@@ -22,15 +21,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='State-space neural network tests')
     parser.add_argument('--experiment_id', type=int, default=-1, metavar='N',
                         help='experiment id (default: -1)')
-    parser.add_argument('--epochs', type=int, default=100, metavar='N',
+    parser.add_argument('--epochs', type=int, default=1000, metavar='N',
                         help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=300, metavar='N',
+    parser.add_argument('--max_time', type=float, default=600, metavar='N',
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='batch size (default:64)')
-    parser.add_argument('--seq_len', type=int, default=80, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=128, metavar='N',
                         help='length of the training sequences (default: 20000)')
-    parser.add_argument('--hidden_size', type=int, default=15, metavar='N',
+    parser.add_argument('--hidden_size', type=int, default=50, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
     parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
                         help='learning rate (default: 1e-4)')
@@ -60,10 +59,12 @@ if __name__ == "__main__":
     torch.set_num_threads(args.n_threads)
 
     # Constants
-    n_x = 12
-    n_u = 1
-    n_y = 1
+    n_dof = 6
+    n_x = 2*n_dof
+    n_u = n_dof
+    n_y = n_x
     n_fit = 30000
+    ts = 0.1
 
     # %% Load dataset
     t_train, u_train, y_train = robot_loader("train", scale=True)
@@ -76,7 +77,7 @@ if __name__ == "__main__":
     u_val_t = torch.tensor(u_val[:, None, :]).to(device)
     y_val_t = torch.tensor(y_val[:, None, :]).to(device)
 
-    f_xu = models.MechanicalStateSpaceSystem(n_dof=6, hidden_size=args.hidden_size).to(device)
+    f_xu = models.MechanicalStateSpaceSystem(n_dof=n_dof, ts=ts, hidden_size=args.hidden_size).to(device)
     model = StateSpaceSimulator(f_xu, g_x=None).to(device)
 
     # Setup optimizer
@@ -196,24 +197,28 @@ if __name__ == "__main__":
     model.load_state_dict(model_data["model"])
     #estimator.load_state_dict(model_data["estimator"])
 
-    t_full, u_full, y_full = robot_loader("test", scale=True)
+    t_test, u_test, y_test = robot_loader("test", scale=True)
+    q_test = y_test[:, :n_dof]
+    v_test = y_test[:, n_dof:]
     with torch.no_grad():
         model.eval()
         #estimator.eval()
-        u_v = torch.tensor(u_full[:, None, :]).to(device)
-        y_v = torch.tensor(y_full[:, None, :]).to(device)
+        u_v = torch.tensor(u_test[:, None, :]).to(device)
+        y_v = torch.tensor(y_test[:, None, :]).to(device)
         # x0 = estimator(u_v, y_v)
         x0 = torch.zeros((1, n_x), dtype=u_v.dtype, device=u_v.device)
         y_sim = model(x0, u_v).squeeze(1).to("cpu").detach().numpy()
-
+        q_sim = y_sim[:, :n_dof]
+        v_sim = y_sim[:, n_dof:]
     # %% Metrics
 
     from torchid import metrics
-    e_rms = metrics.rmse(y_full, y_sim)[0]
-    fit_idx = metrics.fit_index(y_full, y_sim)[0]
-    r_sq = metrics.r_squared(y_full, y_sim)[0]
+    e_rms = metrics.rmse(y_test, y_sim)
+    fit_idx = metrics.fit_index(y_test, y_sim)
+    r_sq = metrics.r_squared(y_test, y_sim)
 
-    print(f"RMSE: {e_rms:.1f} mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
+    print("RMSE: " + str(e_rms))
+    print("FIT: " + str(fit_idx))
 
     # %% Plots
     if not args.no_figures:
@@ -225,7 +230,13 @@ if __name__ == "__main__":
         ax.set_ylabel("Loss (-)")
         ax.set_xlabel("Iteration (-)")
 
-        fig, ax = plt.subplots(1, 1, sharex=True)
-        ax.plot(y_full[:, 0], 'k', label='meas')
-        ax.grid(True)
-        ax.plot(y_sim[:, 0], 'b', label='sim')
+        fig, ax = plt.subplots(2, 6, sharex=True)
+        for idx in range(n_dof):
+            ax[0, idx].plot(t_test, q_test[:, idx], 'k')
+            ax[0, idx].plot(t_test, q_sim[:, idx], 'b')
+            ax[0, idx].plot(t_test, q_test[:, idx] - q_sim[:, idx], 'r')
+            ax[1, idx].plot(t_test, v_test[:, idx], 'k')
+            ax[1, idx].plot(t_test, v_sim[:, idx], 'b')
+            ax[1, idx].plot(t_test, v_test[:, idx] - v_sim[:, idx], 'r')
+        plt.suptitle("Test")
+
