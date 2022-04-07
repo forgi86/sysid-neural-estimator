@@ -20,6 +20,7 @@ if __name__ == '__main__':
     n_x = 2*n_dof
     n_u = n_dof
     n_y = n_x
+    ts = 0.1
 
     args = model_data["args"]
 
@@ -27,13 +28,11 @@ if __name__ == '__main__':
     t, u, y = robot_loader("test", scale=True)
     u_mean, u_std = robot_scaling()
 
-    dataset = SubsequenceDataset(u, y, subseq_len=args.seq_len)
+    dataset = SubsequenceDataset(torch.tensor(u), torch.tensor(y), subseq_len=args.seq_len)
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
-    u_t = torch.tensor(u[:, None, :])
-    y_t = torch.tensor(y[:, None, :])
 
     #%% Load models and parameters
-    f_xu = models.MechanicalStateSpaceSystem(n_dof, hidden_size=args.hidden_size)
+    f_xu = models.MechanicalStateSpaceSystem(n_dof, ts=ts, hidden_size=args.hidden_size)
     g_x = None
     model = StateSpaceSimulator(f_xu, g_x)
     model.load_state_dict(model_data["model"])

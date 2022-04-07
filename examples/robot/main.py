@@ -74,8 +74,9 @@ if __name__ == "__main__":
     # %%  Prepare dataset, models, optimizer
     train_data = SubsequenceDataset(u_fit, y_fit, subseq_len=args.seq_len)
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
-    u_val_t = torch.tensor(u_val[:, None, :]).to(device)
-    y_val_t = torch.tensor(y_val[:, None, :]).to(device)
+
+    val_data = SubsequenceDataset(torch.tensor(u_val), torch.tensor(y_val), subseq_len=args.seq_len)
+    val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=True)
 
     f_xu = models.MechanicalStateSpaceSystem(n_dof=n_dof, ts=ts, hidden_size=args.hidden_size).to(device)
     model = StateSpaceSimulator(f_xu, g_x=None).to(device)
@@ -134,15 +135,31 @@ if __name__ == "__main__":
         TRAIN_LOSS.append(train_loss)
 
         # Validation loss: full simulation error
-        with torch.no_grad():
-            model.eval()
-            x0 = torch.zeros((1, n_x), dtype=u_val_t.dtype,
-                             device=u_val_t.device)
+        #with torch.no_grad():
+        #    model.eval()
+        #    x0 = torch.zeros((1, n_x), dtype=u_val_t.dtype,
+        #                     device=u_val_t.device)
             # x0 = state_estimator(u_val_t, y_val_t)
-            y_val_sim = model(x0, u_val_t)
-            val_loss = torch.nn.functional.mse_loss(y_val_t, y_val_sim)
+        #    y_val_sim = model(x0, u_val_t)
+        #    val_loss = torch.nn.functional.mse_loss(y_val_t, y_val_sim)
 
+        # Validation loss: prediction on the same interval
+        val_loss = 0.0
+        with torch.no_grad():
+            for batch_u, batch_y in val_loader:
+                batch_u = batch_u.transpose(0, 1)  # transpose to time_first
+                batch_y = batch_y.transpose(0, 1)  # transpose to time_first
+                batch_x0 = batch_y[0, :, :].squeeze(0)
+
+                batch_y_sim = model(batch_x0, batch_u)
+
+                # Compute val loss
+                loss = torch.nn.functional.mse_loss(batch_y, batch_y_sim)
+                val_loss += loss
+
+        val_loss = val_loss / len(val_loader)
         VAL_LOSS.append(val_loss.item())
+
         print(f'==== Epoch {epoch} | Train Loss {train_loss:.4f} Val (sim) Loss {val_loss:.4f} ====')
 
         # best model so far, save it
