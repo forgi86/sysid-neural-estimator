@@ -20,10 +20,11 @@ if __name__ == '__main__':
     n_y = model_data["n_y"]
     n_u = model_data["n_u"]
     args = model_data["args"]
+    decimate = 10
 
-    t_full, u_full, y_full = pick_place_loader(scale=True)
+    t_full, u_full, y_full = pick_place_loader(dataset="full", decimate=decimate, scale=True)
 
-    f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=args.hidden_size)
+    f_xu = models.NeuralLinStateUpdateV2(n_x, n_u, hidden_size=args.hidden_size)
     g_x = models.LinearOutput(n_x, n_u)
     model = StateSpaceSimulator(f_xu, g_x)
 
@@ -66,11 +67,11 @@ if __name__ == '__main__':
     # %% Metrics
 
     from torchid import metrics
-    e_rms = 1000 * metrics.rmse(y_full, y_sim)[0]
+    e_rms = metrics.rmse(y_full, y_sim)[0]
     fit_idx = metrics.fit_index(y_full, y_sim)[0]
     r_sq = metrics.r_squared(y_full, y_sim)[0]
 
-    print(f"RMSE: {e_rms:.1f} mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
+    print(f"RMSE: {e_rms:.1f} \nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
     # %% Plots
     fig, ax = plt.subplots(1, 1, sharex=True)

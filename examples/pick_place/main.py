@@ -28,7 +28,7 @@ if __name__ == '__main__':
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=128, metavar='N',
                         help='batch size (default:64)')
-    parser.add_argument('--seq_len', type=int, default=150, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=100, metavar='N',
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--seq_est_len', type=int, default=20, metavar='N',
                         help='length of the training sequences (default: 20000)')
@@ -38,7 +38,7 @@ if __name__ == '__main__':
                         help='Estimator type. Possible values: LSTM|FF|ZERO|RAND')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
                         help='model: number of units per hidden layer (default: 64)')
-    parser.add_argument('--hidden_size', type=int, default=34, metavar='N',
+    parser.add_argument('--hidden_size', type=int, default=20, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
     parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 1e-4)')
@@ -71,13 +71,15 @@ if __name__ == '__main__':
     torch.set_num_threads(args.n_threads)
 
     # Constants
-    n_x = 3
+    n_x = 4
     n_u = 1
     n_y = 1
-    n_fit = 50000
+    decimate = 10
 
     # %% Load dataset
-    t_train, u_train, y_train = pick_place_loader(scale=True)
+    t_train, u_train, y_train = pick_place_loader(dataset="train", decimate=decimate, scale=True)
+    n_fit = int(len(t_train)*0.8)
+
     t_fit, u_fit, y_fit = t_train[:n_fit], u_train[:n_fit], y_train[:n_fit]
     t_val, u_val, y_val = t_train[n_fit:] - t_train[n_fit], u_train[n_fit:], y_train[n_fit:]
 

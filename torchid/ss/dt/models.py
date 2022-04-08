@@ -173,6 +173,73 @@ class NeuralLinStateUpdate(nn.Module):
         return dx
 
 
+class NeuralLinStateUpdateV2(nn.Module):
+    r"""State-update mapping modeled as a feed-forward neural network with one hidden layer.
+
+    The model has structure:
+
+    .. math::
+        \begin{aligned}
+            x_{k+1} = x_k + \mathcal{N}(x_k, u_k),
+        \end{aligned}
+
+    where :math:`\mathcal{N}(\cdot, \cdot)` is a feed-forward neural network with one hidden layer.
+
+    Args:
+        n_x (int): Number of state variables
+        n_u (int): Number of input variables
+        hidden_size: (int, optional): Number of input features in the hidden layer. Default: 0
+        init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
+        activation: (str): Activation function in the hidden layer. Either 'relu', 'softplus', 'tanh'. Default: 'relu'
+
+    Examples::
+
+        >>> ss_model = NeuralStateUpdate(n_x=2, n_u=1, hidden_size=64)
+    """
+
+    def __init__(self, n_x, n_u, hidden_size=16, init_small=True):
+        super(NeuralLinStateUpdateV2, self).__init__()
+        self.n_x = n_x
+        self.n_u = n_u
+        self.hidden_size = hidden_size
+        self.net = nn.Sequential(
+            nn.Linear(n_x + n_u, hidden_size),  # 2 states, 1 input
+            nn.ReLU(),
+            nn.Linear(hidden_size, n_x)
+        )
+        self.lin = nn.Linear(n_x + n_u, n_x, bias=False)
+        self.nl_on = True
+
+        if init_small:
+            for m in self.net.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, mean=0, std=1e-4)
+                    nn.init.constant_(m.bias, val=0)
+
+            for m in self.lin.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, mean=0, std=1e-4)
+
+    def freeze_nl(self):
+        self.net.requires_grad_(False)
+
+    def unfreeze_nl(self):
+        self.net.requires_grad_(False)
+
+    def enable_nl(self):
+        self.nl_on = True
+
+    def disable_nl(self):
+        self.nl_on = False
+
+    def forward(self, x, u):
+        xu = torch.cat((x, u), -1)
+        dx = self.lin(xu)
+        if self.nl_on:
+            dx = dx + self.net(xu)
+        return dx
+
+
 class LinearStateUpdate(nn.Module):
     r"""State-update mapping modeled as a linear function in x and u.
 
