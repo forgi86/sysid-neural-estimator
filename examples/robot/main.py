@@ -27,7 +27,7 @@ if __name__ == "__main__":
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=128, metavar='N',
                         help='batch size (default:64)')
-    parser.add_argument('--seq_len', type=int, default=40, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=50, metavar='N',
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--hidden_size', type=int, default=32, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
@@ -147,8 +147,8 @@ if __name__ == "__main__":
         val_loss = 0.0
         with torch.no_grad():
             for batch_u, batch_y in val_loader:
-                batch_u = batch_u.transpose(0, 1)  # transpose to time_first
-                batch_y = batch_y.transpose(0, 1)  # transpose to time_first
+                batch_u = batch_u.transpose(0, 1).to(device)  # transpose to time_first
+                batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
                 batch_x0 = batch_y[0, :, :].squeeze(0)
 
                 batch_y_sim = model(batch_x0, batch_u)

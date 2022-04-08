@@ -16,10 +16,10 @@ def robot_loader(dataset, scale=True, dtype=np.float32):
     u = data[f"u_{dataset}"].transpose()
     q = np.pi/180.0*data[f"y_{dataset}"].transpose()
     ts = 0.1  # np.median(np.diff(t))
-    ny = q.shape[1]
+    nq = q.shape[1]
 
     # Banal velocity computation
-    v = np.r_[np.zeros((1, ny)), np.diff(q, axis=0)/ts]
+    v = np.r_[np.zeros((1, nq)), np.diff(q, axis=0)/ts]
     x = np.c_[q, v]
 
     if scale:

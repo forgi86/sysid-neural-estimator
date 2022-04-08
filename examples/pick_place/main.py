@@ -9,8 +9,8 @@ import torchid.ss.dt.models as models
 import torchid.ss.dt.estimators as estimators
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from loader import pick_place_loader
-import matplotlib
-matplotlib.use("Agg")
+#import matplotlib
+#matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import argparse
 
@@ -22,15 +22,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='State-space neural network tests')
     parser.add_argument('--experiment_id', type=int, default=-1, metavar='N',
                         help='experiment id (default: -1)')
-    parser.add_argument('--epochs', type=int, default=100, metavar='N',
+    parser.add_argument('--epochs', type=int, default=10000, metavar='N',
                         help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=300, metavar='N',
+    parser.add_argument('--max_time', type=float, default=1800, metavar='N',
                         help='maximum training time in seconds (default:3600)')
-    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=128, metavar='N',
                         help='batch size (default:64)')
-    parser.add_argument('--seq_len', type=int, default=128, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=150, metavar='N',
                         help='length of the training sequences (default: 20000)')
-    parser.add_argument('--seq_est_len', type=int, default=50, metavar='N',
+    parser.add_argument('--seq_est_len', type=int, default=20, metavar='N',
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--est_direction', type=str, default="forward",
                         help='Estimate forward in time')
@@ -38,9 +38,9 @@ if __name__ == '__main__':
                         help='Estimator type. Possible values: LSTM|FF|ZERO|RAND')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
                         help='model: number of units per hidden layer (default: 64)')
-    parser.add_argument('--hidden_size', type=int, default=15, metavar='N',
+    parser.add_argument('--hidden_size', type=int, default=34, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
-    parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
+    parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 1e-4)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
@@ -84,11 +84,12 @@ if __name__ == '__main__':
     # %%  Prepare dataset, models, optimizer
     train_data = SubsequenceDataset(u_fit, y_fit, subseq_len=load_len)
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
-    u_val_t = torch.tensor(u_val[:, None, :]).to(device)
-    y_val_t = torch.tensor(y_val[:, None, :]).to(device)
+
+    val_data = SubsequenceDataset(torch.tensor(u_val), torch.tensor(y_val), subseq_len=args.seq_len)
+    val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=True)
 
     f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=args.hidden_size).to(device)
-    g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=args.hidden_size).to(device)
+    g_x = models.LinearOutput(n_x, n_u).to(device)
     model = StateSpaceSimulator(f_xu, g_x).to(device)
     if args.est_type == "LSTM":
         estimator = estimators.LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
@@ -178,16 +179,45 @@ if __name__ == '__main__':
         TRAIN_LOSS.append(train_loss)
 
         # Validation loss: full simulation error
-        with torch.no_grad():
-            model.eval()
-            estimator.eval()
-            x0 = torch.zeros((1, n_x), dtype=u_val_t.dtype,
-                             device=u_val_t.device)
+        #with torch.no_grad():
+        #    model.eval()
+        #    estimator.eval()
+        #    x0 = torch.zeros((1, n_x), dtype=u_val_t.dtype,
+        #                     device=u_val_t.device)
             # x0 = state_estimator(u_val_t, y_val_t)
-            y_val_sim = model(x0, u_val_t)
-            val_loss = torch.nn.functional.mse_loss(y_val_t, y_val_sim)
+        #    y_val_sim = model(x0, u_val_t)
+        #    val_loss = torch.nn.functional.mse_loss(y_val_t, y_val_sim)
 
+        val_loss = 0.0
+        with torch.no_grad():
+            for batch_u, batch_y in val_loader:
+                batch_u = batch_u.transpose(0, 1).to(device)  # transpose to time_first
+                batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
+
+                batch_u_est = batch_u[:args.seq_est_len]
+                batch_y_est = batch_y[:args.seq_est_len]
+                batch_x0 = estimator(batch_u_est, batch_y_est)
+
+                batch_y_fit = batch_y[args.seq_est_len:]
+
+                if args.est_type not in ["ZERO", "RAND"]:  # for not-dummy estimators
+                    batch_u_fit = batch_u[args.seq_est_len:]
+                else:
+                    batch_u_fit = batch_u
+
+                batch_y_sim = model(batch_x0, batch_u_fit)
+
+                # Compute fit loss
+                if args.est_type in ["ZERO", "RAND"]:  # for dummy estimators
+                    batch_y_sim = batch_y_sim[args.seq_est_len:]
+
+                # Compute val loss
+                loss = torch.nn.functional.mse_loss(batch_y_fit, batch_y_sim)
+                val_loss += loss
+
+        val_loss = val_loss / len(val_loader)
         VAL_LOSS.append(val_loss.item())
+
         print(f'==== Epoch {epoch} | Train Loss {train_loss:.4f} Val (sim) Loss {val_loss:.4f} ====')
 
         # best model so far, save it
@@ -249,9 +279,18 @@ if __name__ == '__main__':
         estimator.eval()
         u_v = torch.tensor(u_full[:, None, :]).to(device)
         y_v = torch.tensor(y_full[:, None, :]).to(device)
-        # x0 = estimator(u_v, y_v)
-        x0 = torch.zeros((1, n_x), dtype=u_v.dtype, device=u_v.device)
-        y_sim = model(x0, u_v).squeeze(1).to("cpu").detach().numpy()
+
+        u_est = u_v[:args.seq_est_len]
+        y_est = y_v[:args.seq_est_len]
+        x0 = estimator(u_est, y_est)
+
+        if args.est_type not in ["ZERO", "RAND"]:  # for not-dummy estimators
+            u_fit = u_v[args.seq_est_len:]
+        else:
+            u_fit = u_v
+
+        y_sim = model(x0, u_fit).squeeze(1).to("cpu").detach().numpy()
+        y_sim = np.r_[np.zeros((args.seq_est_len, 1)), y_sim]
 
     # %% Metrics
 
