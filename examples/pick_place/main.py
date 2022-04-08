@@ -75,6 +75,7 @@ if __name__ == '__main__':
     n_u = 1
     n_y = 1
     decimate = 10
+    val_sim = True
 
     # %% Load dataset
     t_train, u_train, y_train = pick_place_loader(dataset="train", decimate=decimate, scale=True)
@@ -87,8 +88,14 @@ if __name__ == '__main__':
     train_data = SubsequenceDataset(u_fit, y_fit, subseq_len=load_len)
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
 
-    val_data = SubsequenceDataset(torch.tensor(u_val), torch.tensor(y_val), subseq_len=args.seq_len)
-    val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=True)
+    if val_sim:
+        # Validation based on full simulation error
+        val_data = SubsequenceDataset(torch.tensor(u_val), torch.tensor(y_val), subseq_len=y_val.shape[0])
+        val_loader = DataLoader(val_data, batch_size=1, shuffle=False)
+    else:
+        # Validation based on subsequences, same as training loss
+        val_data = SubsequenceDataset(torch.tensor(u_val), torch.tensor(y_val), subseq_len=args.seq_len)
+        val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=True)
 
     f_xu = models.NeuralLinStateUpdateV2(n_x, n_u, hidden_size=args.hidden_size).to(device)
     g_x = models.LinearOutput(n_x, n_u).to(device)

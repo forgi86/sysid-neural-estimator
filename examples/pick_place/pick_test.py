@@ -1,16 +1,12 @@
 import os
-import time
 import numpy as np
 import torch
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torchid.datasets import SubsequenceDataset
 import torchid.ss.dt.models as models
 import torchid.ss.dt.estimators as estimators
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from loader import pick_place_loader
 import matplotlib.pyplot as plt
-import argparse
+
 
 if __name__ == '__main__':
 
