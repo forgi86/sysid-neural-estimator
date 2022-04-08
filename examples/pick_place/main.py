@@ -28,7 +28,7 @@ if __name__ == '__main__':
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=128, metavar='N',
                         help='batch size (default:64)')
-    parser.add_argument('--seq_len', type=int, default=100, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=256, metavar='N',
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--seq_est_len', type=int, default=20, metavar='N',
                         help='length of the training sequences (default: 20000)')
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     val_data = SubsequenceDataset(torch.tensor(u_val), torch.tensor(y_val), subseq_len=args.seq_len)
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=True)
 
-    f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=args.hidden_size).to(device)
+    f_xu = models.NeuralLinStateUpdateV2(n_x, n_u, hidden_size=args.hidden_size).to(device)
     g_x = models.LinearOutput(n_x, n_u).to(device)
     model = StateSpaceSimulator(f_xu, g_x).to(device)
     if args.est_type == "LSTM":
