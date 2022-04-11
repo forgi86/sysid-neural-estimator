@@ -71,7 +71,7 @@ if __name__ == '__main__':
     torch.set_num_threads(args.n_threads)
 
     # Constants
-    n_x = 4
+    n_x = 2
     n_u = 1
     n_y = 1
     decimate = 10
