@@ -32,14 +32,14 @@ if __name__ == '__main__':
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--seq_est_len', type=int, default=20, metavar='N',
                         help='length of the training sequences (default: 20000)')
-    parser.add_argument('--est_direction', type=str, default="forward",
-                        help='Estimate forward in time')
     parser.add_argument('--est_type', type=str, default="FF",
                         help='Estimator type. Possible values: LSTM|FF|ZERO|RAND')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
-                        help='model: number of units per hidden layer (default: 64)')
-    parser.add_argument('--hidden_size', type=int, default=20, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
+    parser.add_argument('--n_x', type=int, default=2, metavar='N',
+                        help='model: number of states (default: 2)')
+    parser.add_argument('--hidden_size', type=int, default=20, metavar='N',
+                        help='model: number of units per hidden layer (default: 64)')
     parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 1e-4)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
@@ -71,10 +71,10 @@ if __name__ == '__main__':
     torch.set_num_threads(args.n_threads)
 
     # Constants
-    n_x = 2
+    n_x = args.n_x
     n_u = 1
     n_y = 1
-    decimate = 10
+    decimate = 10  # take 1 sample every decimate (original dataset is quite oversampled)
     val_sim = True
 
     # %% Load dataset
