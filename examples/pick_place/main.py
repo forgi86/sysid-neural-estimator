@@ -293,13 +293,15 @@ if __name__ == '__main__':
         y_est = y_v[:args.seq_est_len]
         x0 = estimator(u_est, y_est)
 
-        if args.est_type not in ["ZERO", "RAND"]:  # for not-dummy estimators
+        if args.est_type not in ["ZERO", "RAND"]:  # for non-dummy estimators
             u_fit = u_v[args.seq_est_len:]
         else:
             u_fit = u_v
 
         y_sim = model(x0, u_fit).squeeze(1).to("cpu").detach().numpy()
-        y_sim = np.r_[np.zeros((args.seq_est_len, 1)), y_sim]
+
+        if args.est_type not in ["ZERO", "RAND"]:  # for non-dummy estimators
+            y_sim = np.r_[np.zeros((args.seq_est_len, 1)), y_sim]
 
     # %% Metrics
 
