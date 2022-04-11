@@ -25,7 +25,7 @@ if __name__ == '__main__':
     args = model_data["args"]
 
     # Load dataset
-    t, u, y = robot_loader("train", scale=True)
+    t, u, y = robot_loader("test", scale=True)
     u_mean, u_std = robot_scaling()
 
     dataset = SubsequenceDataset(torch.tensor(u), torch.tensor(y), subseq_len=args.seq_len)

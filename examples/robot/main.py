@@ -23,13 +23,13 @@ if __name__ == "__main__":
                         help='experiment id (default: -1)')
     parser.add_argument('--epochs', type=int, default=1000, metavar='N',
                         help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=3600, metavar='N',
+    parser.add_argument('--max_time', type=float, default=3*3600, metavar='N',
                         help='maximum training time in seconds (default:3600)')
-    parser.add_argument('--batch_size', type=int, default=128, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=64, metavar='N',
                         help='batch size (default:64)')
-    parser.add_argument('--seq_len', type=int, default=50, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=100, metavar='N',
                         help='length of the training sequences (default: 20000)')
-    parser.add_argument('--hidden_size', type=int, default=32, metavar='N',
+    parser.add_argument('--hidden_size', type=int, default=64, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
     parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 1e-3)')
@@ -133,15 +133,6 @@ if __name__ == "__main__":
 
         train_loss = train_loss / len(train_loader)
         TRAIN_LOSS.append(train_loss)
-
-        # Validation loss: full simulation error
-        #with torch.no_grad():
-        #    model.eval()
-        #    x0 = torch.zeros((1, n_x), dtype=u_val_t.dtype,
-        #                     device=u_val_t.device)
-            # x0 = state_estimator(u_val_t, y_val_t)
-        #    y_val_sim = model(x0, u_val_t)
-        #    val_loss = torch.nn.functional.mse_loss(y_val_t, y_val_sim)
 
         # Validation loss: prediction on the same interval
         val_loss = 0.0

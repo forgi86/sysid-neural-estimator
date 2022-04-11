@@ -400,11 +400,11 @@ class MechanicalStateSpaceSystem(nn.Module):
         self.ts = ts
 
         self.net = nn.Sequential(
-            nn.Linear(2*self.n_dof + self.n_dof, hidden_size),  # inputs: position, velocities, torques (fully actuated)
+            nn.Linear(2*self.n_dof + self.n_dof, 64),  # inputs: position, velocities, torques (fully actuated)
             nn.Tanh(),
-            nn.Linear(self.hidden_size, self.hidden_size),
+            nn.Linear(64, 32),
             nn.Tanh(),
-            nn.Linear(self.hidden_size, self.n_dof)
+            nn.Linear(32, n_dof)
         )
 
         self.lin = nn.Linear(2*self.n_dof + self.n_dof, self.n_dof)
