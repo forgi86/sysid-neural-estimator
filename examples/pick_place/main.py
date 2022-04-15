@@ -40,7 +40,7 @@ if __name__ == '__main__':
                         help='model: number of states (default: 2)')
     parser.add_argument('--hidden_size', type=int, default=20, metavar='N',
                         help='model: number of units per hidden layer (default: 64)')
-    parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
+    parser.add_argument('--lr', type=float, default=5e-4, metavar='LR',
                         help='learning rate (default: 1e-4)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')

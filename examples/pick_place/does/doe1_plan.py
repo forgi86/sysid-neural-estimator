@@ -9,14 +9,14 @@ if __name__ == "__main__":
     doe_name = "doe1"
 
     df_exp = build.full_fact(
-        {'lr': [1e-3, 1e-4],
+        {'lr': [1e-3],
          'epochs': [10000],
          'max_time': [300, 1800],
          'batch_size': [32, 128, 1024],
-         'seq_len': [64, 128, 256, 512],
-         'seq_est_len': [10, 40, 80, 100],
+         'seq_len': [64, 256, 512],
+         'seq_est_len': [10, 40, 100],
          'est_type': ["LSTM", "FF", "ZERO", "RAND"],
-         'est_hidden_size': [10, 20, 30],
+         'est_hidden_size': [10, 30],
          }
     )
     df_exp.index.name = "experiment_id"
