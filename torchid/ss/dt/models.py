@@ -391,6 +391,25 @@ class ChannelsOutput(nn.Module):
         return y
 
 
+class TrigFeatures(nn.Module):
+    r"""Output  mapping corresponding to a specific state channel.
+
+    """
+
+    def __init__(self, trig_channels, other_channels):
+        super(TrigFeatures, self).__init__()
+        self.trig_channels = trig_channels
+        self.other_channels = other_channels
+
+    def forward(self, x):
+        y = torch.cat([
+            torch.sin(x[..., self.trig_channels]),
+            torch.cos(x[..., self.trig_channels]),
+            x[..., self.other_channels]], -1
+        )
+        return y
+
+
 class MechanicalStateSpaceSystem(nn.Module):
     """ Model of a fully-actuated mechanical system"""
     def __init__(self, n_dof=7, hidden_size=64, ts=1.0, init_small=True):
@@ -427,6 +446,52 @@ class MechanicalStateSpaceSystem(nn.Module):
 
         dq = self.ts * x[..., self.n_dof:]  # \dot q = v
         dv = self.lin(xu) + self.net(xu)  # \dot v = net(q,v,u)
+        dx = torch.cat([dq, dv], -1)
+        return dx
+
+
+class MechanicalTrigStateSpaceSystem(nn.Module):
+    """ Model of a fully-actuated mechanical system"""
+    def __init__(self, n_dof=6, hidden_size=64, ts=1.0, init_small=True):
+        super(MechanicalTrigStateSpaceSystem, self).__init__()
+        self.hidden_size = hidden_size
+        self.n_dof = n_dof
+        self.ts = ts
+
+        self.net = nn.Sequential(
+            nn.Linear(3*self.n_dof + self.n_dof, 64),  # inputs: position features, velocities, torques (fully actuated)
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, n_dof)
+        )
+
+        self.lin = nn.Linear(3*self.n_dof + self.n_dof, self.n_dof)
+
+        # Small initialization is better for multi-step methods
+        if init_small:
+            for m in self.net.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, mean=0, std=1e-3)
+                    nn.init.constant_(m.bias, val=0)
+
+            for m in self.lin.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, mean=0, std=1e-3)
+
+    def forward(self, x, u):
+
+        # concatenate x and u over the last dimension to create the xu network input
+        x_trig = torch.cat([
+            torch.sin(x[..., :self.n_dof]),
+            torch.cos(x[..., :self.n_dof]),
+            x[..., self.n_dof:]], -1
+        )
+        xu = torch.cat((x_trig, u), -1)
+
+        dq = self.ts * x[..., self.n_dof:]  # \dot q = v
+        dv = self.lin(xu) + self.net(xu)  # \dot v = net(q,v,u)
+        #dv = self.net(xu)
         dx = torch.cat([dq, dv], -1)
         return dx
 

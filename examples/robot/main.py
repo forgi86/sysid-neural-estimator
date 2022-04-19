@@ -78,7 +78,7 @@ if __name__ == "__main__":
     val_data = SubsequenceDataset(torch.tensor(u_val), torch.tensor(y_val), subseq_len=args.seq_len)
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=True)
 
-    f_xu = models.MechanicalStateSpaceSystem(n_dof=n_dof, ts=ts, hidden_size=args.hidden_size).to(device)
+    f_xu = models.MechanicalTrigStateSpaceSystem(n_dof=n_dof, ts=ts, hidden_size=args.hidden_size).to(device)
     model = StateSpaceSimulator(f_xu, g_x=None).to(device)
 
     # Setup optimizer
