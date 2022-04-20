@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     df_res = df_plan.copy()
     df_res["FIT"] = np.nan
-    df_res["RMSE"] = np.nan
+    #df_res["RMSE"] = np.nan
 
     # Load dataset
     t, u, y = pick_place_loader("test", scale=True)
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     u_v = torch.from_numpy(u[:, None, :])
     y_v = torch.from_numpy(y[:, None, :])
 
-    y = y * y_std + y_mean  # scaled, for statistics
+    #y = y * y_std + y_mean  # scaled, for statistics
 
     cnt = 0
     for exp_id, row in df_plan.iterrows():
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         filename = os.path.join("models", DOE_NAME, f"model_{exp_id:.0f}.pt")
         if not os.path.exists(filename):
             continue
-        model_data = torch.load(filename)
+        model_data = torch.load(filename, map_location=torch.device('cpu'))
 
         n_x = model_data["n_x"]
         n_y = model_data["n_y"]
@@ -75,12 +75,17 @@ if __name__ == '__main__':
             y_est = y_v[:args.seq_est_len]
             x0 = estimator(u_est, y_est)
 
-            if args.est_type not in ["ZERO", "RAND"]:  # for not-dummy estimators
+            if args.est_type not in ["ZERO", "RAND"]:  # for non-dummy estimators
                 u_fit = u_v[args.seq_est_len:]
             else:
                 u_fit = u_v
 
             y_sim = model(x0, u_fit).squeeze(1).detach().numpy()
-            y_sim = np.r_[np.zeros((args.seq_est_len, 1)), y_sim]
+
+            if args.est_type not in ["ZERO", "RAND"]:  # for non-dummy estimators
+                y_sim = np.r_[np.zeros((args.seq_est_len, 1)), y_sim]
+
+        fit_idx = metrics.fit_index(y, y_sim)[0]
+        df_res.loc[exp_id, "FIT"] = fit_idx
 
     df_res.to_csv(os.path.join("does", DOE_NAME + "_res.csv"))
