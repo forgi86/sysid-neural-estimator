@@ -27,11 +27,11 @@ if __name__ == "__main__":
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=64, metavar='N',
                         help='batch size (default:64)')
-    parser.add_argument('--seq_len', type=int, default=100, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=50, metavar='N',
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--hidden_size', type=int, default=64, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
-    parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
+    parser.add_argument('--lr', type=float, default=2e-4, metavar='LR',
                         help='learning rate (default: 1e-3)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')

@@ -47,3 +47,8 @@ if __name__ == "__main__":
         ax[1].plot(t, q)
         ax[2].plot(t, v)
         plt.suptitle(dataset)
+
+    plt.figure()
+    plt.plot(t, q[:, 0])
+    plt.plot(t, v[:, 0])
+    plt.plot(t, np.zeros(v[:, 0].shape), 'k')

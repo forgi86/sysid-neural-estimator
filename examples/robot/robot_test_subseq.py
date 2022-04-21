@@ -1,7 +1,7 @@
 import os
 import torch
+import numpy as np
 import torchid.ss.dt.models as models
-import torchid.ss.dt.estimators as estimators
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
@@ -9,7 +9,6 @@ from loader import robot_loader, robot_scaling
 import matplotlib
 matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
-from torchid import metrics
 
 
 if __name__ == '__main__':
@@ -25,9 +24,10 @@ if __name__ == '__main__':
     args = model_data["args"]
 
     # Load dataset
-    t, u, y = robot_loader("train", scale=True)
+    t, u, y = robot_loader("test", scale=True)
     u_mean, u_std = robot_scaling()
 
+    #dataset = SubsequenceDataset(torch.tensor(u), torch.tensor(y), subseq_len=3000)
     dataset = SubsequenceDataset(torch.tensor(u), torch.tensor(y), subseq_len=args.seq_len)
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
@@ -62,14 +62,16 @@ if __name__ == '__main__':
     examples = 4
     #fig, ax = plt.subplots(examples, 1, sharex=True)
     for batch_idx in range(examples):
-        fig, ax = plt.subplots(2, 6, sharex=True)
+        fig, ax = plt.subplots(3, 6, sharex=True)
         for dof_idx in range(n_dof):
             ax[0, dof_idx].plot(batch_y[:, batch_idx, dof_idx], 'k')
             ax[0, dof_idx].plot(batch_y_sim[:, batch_idx, dof_idx], 'b')
             ax[0, dof_idx].plot(batch_y[:, batch_idx, dof_idx] -
                                 batch_y_sim[:, batch_idx, dof_idx], 'r')
+            ax[0, dof_idx].set_ylim([-np.pi, np.pi])
 
             ax[1, dof_idx].plot(batch_y[:, batch_idx, dof_idx + n_dof], 'k')
             ax[1, dof_idx].plot(batch_y_sim[:, batch_idx, dof_idx + n_dof], 'b')
             ax[1, dof_idx].plot(batch_y[:, batch_idx, dof_idx + n_dof] -
                                 batch_y_sim[:, batch_idx, dof_idx+n_dof], 'r')
+            ax[2, dof_idx].plot(batch_u[:, batch_idx, dof_idx])
