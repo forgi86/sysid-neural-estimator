@@ -460,10 +460,12 @@ class MechanicalTrigStateSpaceSystem(nn.Module):
 
         self.net = nn.Sequential(
             nn.Linear(3*self.n_dof + self.n_dof, 64),  # inputs: position features, velocities, torques (fully actuated)
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, n_dof)
+            nn.Tanh(),
+            nn.Linear(32, 16),
+            nn.Tanh(),
+            nn.Linear(16, n_dof)
         )
 
         self.lin = nn.Linear(3*self.n_dof + self.n_dof, self.n_dof)
@@ -481,17 +483,15 @@ class MechanicalTrigStateSpaceSystem(nn.Module):
 
     def forward(self, x, u):
 
+        q = x[..., 0:self.n_dof]
+        v = x[..., self.n_dof:]
         # concatenate x and u over the last dimension to create the xu network input
-        x_trig = torch.cat([
-            torch.sin(x[..., :self.n_dof]),
-            torch.cos(x[..., :self.n_dof]),
-            x[..., self.n_dof:]], -1
-        )
+        x_trig = torch.cat([torch.cos(q), torch.sin(q), v], -1)
         xu = torch.cat((x_trig, u), -1)
 
-        dq = self.ts * x[..., self.n_dof:]  # \dot q = v
-        dv = self.lin(xu) + self.net(xu)  # \dot v = net(q,v,u)
-        #dv = self.net(xu)
+        dq = self.ts * v  # \dot q = v
+        #dv = self.lin(xu) + self.net(xu)  # \dot v = net(q,v,u)
+        dv = self.net(xu)
         dx = torch.cat([dq, dv], -1)
         return dx
 
