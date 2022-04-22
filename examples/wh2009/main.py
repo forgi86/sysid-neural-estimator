@@ -55,6 +55,8 @@ if __name__ == '__main__':
                         help='number of CPU threads')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
+    parser.add_argument('--cuda-device', type=str, default="cuda:0", metavar='S',
+                        help='cuda device (default: "cuda:0")')
     parser.add_argument('--log-interval', type=int, default=20,
                         help='log interval')
     parser.add_argument('--no-figures', action='store_true', default=False,
@@ -85,7 +87,7 @@ if __name__ == '__main__':
 
     # CPU/GPU resources
     use_cuda = not args.no_cuda and torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
+    device = torch.device(args.cuda_device if use_cuda else "cpu")
     torch.set_num_threads(args.n_threads)
 
     # Constants
