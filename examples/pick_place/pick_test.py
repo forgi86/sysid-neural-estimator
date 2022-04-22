@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
-    model_data = torch.load(os.path.join("models", "model.pt"), map_location=torch.device('cpu'))
+    #model_data = torch.load(os.path.join("models", "model.pt"), map_location=torch.device('cpu'))
+    model_data = torch.load(os.path.join("models", "doe1", "model_129.pt"), map_location=torch.device('cpu'))
 
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
@@ -58,7 +59,9 @@ if __name__ == '__main__':
             u_fit = u_v
 
         y_sim = model(x0, u_fit).squeeze(1).detach().numpy()
-        y_sim = np.r_[np.zeros((args.seq_est_len, 1)), y_sim]
+
+        if args.est_type not in ["ZERO", "RAND"]:  # for non-dummy estimators
+            y_sim = np.r_[np.zeros((args.seq_est_len, 1)), y_sim]
 
     # %% Metrics
 
