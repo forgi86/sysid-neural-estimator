@@ -68,6 +68,7 @@ if __name__ == "__main__":
         cmd_in = prepare_command(row)
         cmd_in += f" --save-folder {model_dir}"
         cmd_in += f" --n-threads {args.n_threads}"
+        cmd_in += f" --cuda-device {args.cuda_device}"
         if args.no_cuda:
             cmd_in += f" --no-cuda"
         if args.dry_run:
