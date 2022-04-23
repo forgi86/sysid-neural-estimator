@@ -24,7 +24,7 @@ if __name__ == '__main__':
     args = model_data["args"]
 
     # Load dataset
-    t, u, y = robot_loader("train", scale=True)
+    t, u, y = robot_loader("test", scale=True)
     u_mean, u_std = robot_scaling()
 
     #dataset = SubsequenceDataset(torch.tensor(u), torch.tensor(y), subseq_len=3000)
@@ -59,6 +59,7 @@ if __name__ == '__main__':
     batch_y = batch_y.numpy()
 
 
+    #%%
     examples = 4
     #fig, ax = plt.subplots(examples, 1, sharex=True)
     for batch_idx in range(examples):
@@ -68,7 +69,7 @@ if __name__ == '__main__':
             ax[0, dof_idx].plot(batch_y_sim[:, batch_idx, dof_idx], 'b')
             ax[0, dof_idx].plot(batch_y[:, batch_idx, dof_idx] -
                                 batch_y_sim[:, batch_idx, dof_idx], 'r')
-            ax[0, dof_idx].set_ylim([-np.pi, np.pi])
+            #ax[0, dof_idx].set_ylim([-np.pi, np.pi])
 
             ax[1, dof_idx].plot(batch_y[:, batch_idx, dof_idx + n_dof], 'k')
             ax[1, dof_idx].plot(batch_y_sim[:, batch_idx, dof_idx + n_dof], 'b')
