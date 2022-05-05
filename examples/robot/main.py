@@ -23,11 +23,11 @@ if __name__ == "__main__":
                         help='experiment id (default: -1)')
     parser.add_argument('--epochs', type=int, default=1000, metavar='N',
                         help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=3*3600, metavar='N',
+    parser.add_argument('--max_time', type=float, default=6*3600, metavar='N',
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=64, metavar='N',
                         help='batch size (default:64)')
-    parser.add_argument('--seq_len', type=int, default=100, metavar='N',
+    parser.add_argument('--seq_len', type=int, default=70, metavar='N',
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--hidden_size', type=int, default=64, metavar='N',
                         help='estimator: number of units per hidden layer (default: 64)')
@@ -78,7 +78,11 @@ if __name__ == "__main__":
     val_data = SubsequenceDataset(torch.tensor(u_val), torch.tensor(y_val), subseq_len=args.seq_len)
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=True)
 
-    f_xu = models.MechanicalTrigStateSpaceSystem(n_dof=n_dof, ts=ts, hidden_size=args.hidden_size).to(device)
+    #f_xu = models.MechanicalTrigStateSpaceSystem(n_dof=n_dof, ts=ts, hidden_size=args.hidden_size, init_small=False).to(device)
+    f_xu = models.MechanicalTrigStateSpaceSystem(n_dof=n_dof, ts=ts, hidden_size=args.hidden_size, init_small=True).to(device)
+
+    #f_xu = models.MechanicalTrigStateSpaceSystemV2(n_dof=n_dof, ts=ts, init_small=False).to(device)
+
     model = StateSpaceSimulator(f_xu, g_x=None).to(device)
 
     # Setup optimizer
@@ -153,7 +157,7 @@ if __name__ == "__main__":
         val_loss = val_loss / len(val_loader)
         VAL_LOSS.append(val_loss.item())
 
-        print(f'==== Epoch {epoch} | Train Loss {train_loss:.4f} Val (sim) Loss {val_loss:.4f} ====')
+        print(f'==== Epoch {epoch} | Train Loss {train_loss:.4f} Val Loss {val_loss:.4f} ====')
 
         # best model so far, save it
         if val_loss < min_loss:

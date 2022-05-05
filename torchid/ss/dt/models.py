@@ -427,6 +427,7 @@ class MechanicalStateSpaceSystem(nn.Module):
         )
 
         self.lin = nn.Linear(2*self.n_dof + self.n_dof, self.n_dof)
+        self.nl_on = True
 
         # Small initialization is better for multi-step methods
         if init_small:
@@ -438,6 +439,24 @@ class MechanicalStateSpaceSystem(nn.Module):
             for m in self.lin.modules():
                 if isinstance(m, nn.Linear):
                     nn.init.normal_(m.weight, mean=0, std=1e-3)
+
+    def freeze_nl(self):
+        self.net.requires_grad_(False)
+
+    def unfreeze_nl(self):
+        self.net.requires_grad_(True)
+
+    def freeze_lin(self):
+        self.lin.requires_grad_(False)
+
+    def unfreeze_lin(self):
+        self.lin.requires_grad_(True)
+
+    def enable_nl(self):
+        self.nl_on = True
+
+    def disable_nl(self):
+        self.nl_on = False
 
     def forward(self, x, u):
 
@@ -468,6 +487,78 @@ class MechanicalTrigStateSpaceSystem(nn.Module):
             nn.Linear(16, n_dof)
         )
 
+        self.lin = nn.Linear(2*self.n_dof + self.n_dof, self.n_dof)
+        self.nl_on = True
+        self.lin_on = True
+
+        # Small initialization is better for multi-step methods
+        for m in self.lin.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, mean=0, std=1e-3)
+
+        if init_small:
+            for m in self.net.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, mean=0, std=1e-3)
+                    nn.init.constant_(m.bias, val=0)
+
+    def freeze_nl(self):
+        self.net.requires_grad_(False)
+
+    def unfreeze_nl(self):
+        self.net.requires_grad_(True)
+
+    def freeze_lin(self):
+        self.lin.requires_grad_(False)
+
+    def unfreeze_lin(self):
+        self.lin.requires_grad_(True)
+
+    def enable_nl(self):
+        self.nl_on = True
+
+    def disable_nl(self):
+        self.nl_on = False
+
+    def forward(self, x, u):
+
+        q = x[..., 0:self.n_dof]
+        v = x[..., self.n_dof:]
+        # concatenate x and u over the last dimension to create the xu network input
+
+        dq = self.ts * v  # \dot q = v
+
+        #dv = self.lin(xu) + self.net(xu)  # \dot v = net(q,v,u)
+        dv = torch.zeros_like(v)
+        if self.lin_on:
+            xu_lin = torch.cat((x, u), -1)
+            dv = dv + self.lin(xu_lin)
+        if self.nl_on:
+            x_trig = torch.cat([torch.cos(q), torch.sin(q), v], -1)
+            xu_trig = torch.cat((x_trig, u), -1)
+            dv = dv + self.net(xu_trig)
+        dx = torch.cat([dq, dv], -1)
+
+        return dx
+
+
+class MechanicalTrigStateSpaceSystemV2(nn.Module):
+    """ Model of a fully-actuated mechanical system"""
+    def __init__(self, n_dof=6, ts=1.0, init_small=True):
+        super(MechanicalTrigStateSpaceSystemV2, self).__init__()
+        self.n_dof = n_dof
+        self.ts = ts
+
+        self.net = nn.Sequential(
+            nn.Linear(3*self.n_dof + self.n_dof, 50),  # inputs: position features, velocities, torques (fully actuated)
+            nn.ReLU(),
+            nn.Linear(50, 25),
+            nn.ReLU(),
+            nn.Linear(25, 25),
+            nn.ReLU(),
+            nn.Linear(25, n_dof)
+        )
+
         self.lin = nn.Linear(3*self.n_dof + self.n_dof, self.n_dof)
 
         # Small initialization is better for multi-step methods
@@ -493,6 +584,55 @@ class MechanicalTrigStateSpaceSystem(nn.Module):
         #dv = self.lin(xu) + self.net(xu)  # \dot v = net(q,v,u)
         dv = self.net(xu)
         dx = torch.cat([dq, dv], -1)
+        return dx
+
+
+class MechanicalTrigStateSpaceSystemV3(nn.Module):
+    """ Model of a fully-actuated mechanical system"""
+    def __init__(self, n_dof=6, hidden_size=64, ts=0.1, init_small=True):
+        super(MechanicalTrigStateSpaceSystemV3, self).__init__()
+        self.hidden_size = hidden_size
+        self.n_dof = n_dof
+        self.ts = ts
+
+        self.net = nn.Sequential(
+            nn.Linear(3*self.n_dof + self.n_dof, 50),  # inputs: position features, velocities, torques (fully actuated)
+            nn.Tanh(),
+            nn.Linear(50, 50),
+            nn.Tanh(),
+            nn.Linear(50, 25),
+            nn.Tanh(),
+            nn.Linear(25, n_dof)
+        )
+
+        #self.lin = nn.Linear(2*self.n_dof + self.n_dof, self.n_dof)
+        self.nl_on = True
+        #self.lin_on = True
+
+        # Small initialization is better for multi-step methods
+        #for m in self.lin.modules():
+        #    if isinstance(m, nn.Linear):
+        #        nn.init.normal_(m.weight, mean=0, std=1e-3)
+
+        if init_small:
+            for m in self.net.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, mean=0, std=1e-3)
+                    nn.init.constant_(m.bias, val=0)
+
+    def forward(self, x, u):
+
+        q = x[..., 0:self.n_dof]
+        v = x[..., self.n_dof:]
+        # concatenate x and u over the last dimension to create the xu network input
+
+        dq = self.ts * v  # \dot q = v
+
+        x_trig = torch.cat([torch.cos(q), torch.sin(q), v], -1)
+        xu_trig = torch.cat((x_trig, u), -1)
+        dv = self.net(xu_trig)
+        dx = torch.cat([dq, dv], -1)
+
         return dx
 
 
