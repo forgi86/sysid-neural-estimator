@@ -9,7 +9,7 @@ if __name__ == "__main__":
     df_exp = build.full_fact(
         {'lr': [1e-3],
          'epochs': [10000],
-         'max_time': [300, 1800],
+         'max_time': [300, 1800, 3600],
          'batch_size': [32, 128, 512, 1024],
          'seq_len': [40, 80, 160, 320],
          'seq_est_len': [10, 20, 40, 80],
