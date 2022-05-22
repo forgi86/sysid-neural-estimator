@@ -10,7 +10,7 @@ from torchid import metrics
 
 if __name__ == '__main__':
 
-    DOE_NAME = "doe2"
+    DOE_NAME = "doe5"
     df_plan = pd.read_csv(os.path.join("does", f"{DOE_NAME}_plan.csv"))  # doe1_plan.csv
     df_plan.set_index("experiment_id", inplace=True)
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
         filename = os.path.join("models", DOE_NAME, f"model_{exp_id:.0f}.pt")
         if not os.path.exists(filename):
             continue
-        model_data = torch.load(filename)
+        model_data = torch.load(filename, map_location=torch.device('cpu'))
 
         n_x = model_data["n_x"]
         n_y = model_data["n_y"]
