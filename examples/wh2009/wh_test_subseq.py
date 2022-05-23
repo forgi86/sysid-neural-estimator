@@ -20,7 +20,11 @@ if __name__ == '__main__':
     #model_data = torch.load(os.path.join("models", "doe2", "model_123.pt"), map_location=torch.device('cpu'))  # best
     #model_data = torch.load(os.path.join("models", "doe2", "model_276.pt"), map_location=torch.device('cpu'))  # worst
     #model_data = torch.load(os.path.join("models", "doe2", "model_169.pt"), map_location=torch.device('cpu'))  # short lstm
-    model_data = torch.load(os.path.join("models", "doe3", "model_279.pt"), map_location=torch.device('cpu'))
+    #model_data = torch.load(os.path.join("models", "doe3", "model_279.pt"), map_location=torch.device('cpu'))
+
+    model_data = torch.load(os.path.join("models", "doe5", "model_420.pt"), map_location=torch.device('cpu'))  # worst
+    model_data = torch.load(os.path.join("models", "doe5", "model_113.pt"), map_location=torch.device('cpu'))  # worst
+
 
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
@@ -42,7 +46,7 @@ if __name__ == '__main__':
     estimate_state = True #False
 
     # Load dataset
-    t, u, y = wh2009_loader("test", scale=True)
+    t, u, y = wh2009_loader("train", scale=True)
     y_mean, y_std = wh2009_scaling()
 
     dataset = SubsequenceDataset(u, y, subseq_len=load_len)
@@ -113,3 +117,5 @@ if __name__ == '__main__':
         ax[idx].plot(batch_y_sim_np[idx], 'k')
         ax[idx].plot(batch_y_fit_np[idx], 'b')
         ax[idx].plot(batch_y_fit_np[idx] - batch_y_sim_np[idx], 'r')
+    ax[idx].set_xlabel("time (samples)")
+    plt.savefig("subseq_best.pdf")
