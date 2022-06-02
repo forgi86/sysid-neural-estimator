@@ -25,16 +25,14 @@ if __name__ == '__main__':
     #model_data = torch.load(os.path.join("models", "doe5", "model_420.pt"), map_location=torch.device('cpu'))  # worst
     #model_data = torch.load(os.path.join("models", "doe5", "model_113.pt"), map_location=torch.device('cpu'))  # worst
 
-    model_data = torch.load(os.path.join("models", "doe5", "model_5.pt"), map_location=torch.device('cpu'))  # worst
-    #model_data = torch.load(os.path.join("models", "doe5", "model_578.pt"), map_location=torch.device('cpu'))  # worst
+    #model_data = torch.load(os.path.join("models", "doe5", "model_5.pt"), map_location=torch.device('cpu'))  # worst
+    model_data = torch.load(os.path.join("models", "doe5", "model_578.pt"), map_location=torch.device('cpu'))  # worst
 
 
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
     n_u = model_data["n_u"]
     args = model_data["args"]
-
-    torch.manual_seed(args.seed)
 
     # Derived parameters
     if "est_frac" in args and args.est_frac is not None:
@@ -47,6 +45,8 @@ if __name__ == '__main__':
         load_len = max(args.seq_len, seq_est_len)
     else:
         load_len = args.seq_len + seq_est_len
+
+    estimate_state = True #False
 
     # Load dataset
     t, u, y = wh2009_loader("train", scale=True)
@@ -85,48 +85,40 @@ if __name__ == '__main__':
 
             batch_est_u = batch_u[:seq_est_len]
             batch_est_y = batch_y[:seq_est_len]
-            batch_x0 = estimator(batch_est_u, batch_est_y)
-
-            batch_u_est = batch_u[:args.seq_est_len]
-            batch_y_est = batch_y[:args.seq_est_len]
-            batch_x0 = estimator(batch_u_est, batch_y_est)
-
-            batch_y_fit = batch_y[args.seq_est_len:]
-
-            if args.est_type not in ["ZERO", "RAND"]:  # for not-dummy estimators
-                batch_u_fit = batch_u[args.seq_est_len:]
+            if estimate_state:
+                batch_x0 = estimator(batch_est_u, batch_est_y)
             else:
-                batch_u_fit = batch_u
+                batch_x0 = torch.zeros((batch_est_y.shape[1], n_x),
+                                       dtype=batch_est_y.dtype,
+                                       device=batch_est_y.device)
+
+            if backward_est:
+                # fit on the whole dataset
+                batch_u_fit = batch_u[:args.seq_len]
+                batch_y_fit = batch_y[:args.seq_len]
+            else:
+                # fit only after seq_est_len
+                batch_u_fit = batch_u[seq_est_len:seq_est_len+args.seq_len]
+                batch_y_fit = batch_y[seq_est_len:seq_est_len+args.seq_len]
 
             batch_y_sim = model(batch_x0, batch_u_fit)
 
-            batch_y_sim_full = batch_y_sim.clone()
-            if args.est_type not in ["ZERO", "RAND"]:
-                batch_y_sim_full = torch.cat((torch.nan*torch.zeros((args.seq_est_len, args.batch_size, 1)), batch_y_sim_full), 0)
-
             # Compute fit loss
-            # Compute fit loss
-            if args.est_type in ["ZERO", "RAND"]:  # for dummy estimators
-                batch_y_sim = batch_y_sim[args.seq_est_len:]
-
             loss = torch.nn.functional.mse_loss(batch_y_fit, batch_y_sim)
-            val_loss += loss.item()
+            val_loss += loss
 
     val_loss = val_loss/len(loader)
 
     print(f"Val loss: {val_loss:.3f}")
     #%%
-    batch_y_sim_full_np = batch_y_sim_full.squeeze(-1).transpose(0, 1).numpy()
-    batch_y_np = batch_y.squeeze(-1).transpose(0, 1).numpy()
+    batch_y_sim_np = batch_y_sim.squeeze(-1).transpose(0, 1).numpy()
+    batch_y_fit_np = batch_y_fit.squeeze(-1).transpose(0, 1).numpy()
 
-    examples = 3
+    examples = 4
     fig, ax = plt.subplots(examples, 1, sharex=True)
     for idx in range(examples):
-        ax[idx].plot(batch_y_np[idx], 'k')
-        ax[idx].plot(batch_y_sim_full_np[idx], 'b--')
-
-        #ax[idx].plot(batch_y_np[idx] - batch_y_sim_full_np[idx], 'r-.')
-        if idx == examples - 1:
-            ax[idx].set_xlabel("estimation/fitting sequence index (-)")
-        #ax[idx].grid(axis="y")
+        ax[idx].plot(batch_y_sim_np[idx], 'k')
+        ax[idx].plot(batch_y_fit_np[idx], 'b')
+        ax[idx].plot(batch_y_fit_np[idx] - batch_y_sim_np[idx], 'r')
+    ax[idx].set_xlabel("time (samples)")
     plt.savefig("subseq_best.pdf")
