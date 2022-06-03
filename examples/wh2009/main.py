@@ -24,7 +24,7 @@ if __name__ == '__main__':
                         help='experiment id (default: -1)')
     parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=60, metavar='N',
+    parser.add_argument('--max_time', type=float, default=300, metavar='N',
                         help='maximum training time in seconds (default:3600)')
     parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
                         help='batch size (default:64)')
@@ -32,12 +32,10 @@ if __name__ == '__main__':
                         help='length of the training sequences (default: 20000)')
     parser.add_argument('--seq_est_len', type=int, default=50, metavar='N',
                         help='length of the training sequences (default: 20000)')
-    parser.add_argument('--est_frac', type=float, default=None, metavar='N',
-                        help='fraction of the subsequence used for initial state estimation')
     parser.add_argument('--est_direction', type=str, default="forward",
                         help='Estimate forward in time')
-    parser.add_argument('--est_type', type=str, default="LSTM",
-                        help='Estimator type. Possible values: LSTM|FF|ZERO')
+    parser.add_argument('--est_type', type=str, default="FF",
+                        help='Estimator type. Possible values: LSTM|FF|ZERO|RAND')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
                         help='model: number of units per hidden layer (default: 64)')
     parser.add_argument('--hidden_size', type=int, default=15, metavar='N',
@@ -67,23 +65,7 @@ if __name__ == '__main__':
     torch.manual_seed(args.seed)
 
     # Derived parameters
-    if "est_frac" in args and args.est_frac is not None:
-        seq_est_len = int(args.seq_len * args.est_frac)
-
-    if "seq_est_len" in args and args.seq_est_len is not None:
-        seq_est_len = args.seq_est_len
-
-    if args.est_direction == "backward":
-        backward_est = True
-    elif args.est_direction == "forward":
-        backward_est = False
-    else:
-        raise ValueError("Wrong estimator direction. Possible values: backward|forward")
-
-    if backward_est:
-        load_len = max(args.seq_len, seq_est_len)
-    else:
-        load_len = args.seq_len + seq_est_len
+    load_len = args.seq_len + args.seq_est_len
 
     # CPU/GPU resources
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -113,15 +95,17 @@ if __name__ == '__main__':
     if args.est_type == "LSTM":
         estimator = estimators.LSTMStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
                                                   hidden_size=args.est_hidden_size,
-                                                  flipped=backward_est)
+                                                  flipped=False)
     elif args.est_type == "FF":
         estimator = estimators.FeedForwardStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
                                                          hidden_size=args.est_hidden_size,
-                                                         seq_len=seq_est_len)
+                                                         seq_len=args.seq_est_len)
     elif args.est_type == "ZERO":
         estimator = estimators.ZeroStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x)
+    elif args.est_type == "RAND":
+        estimator = estimators.RandomStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x)
     else:
-        raise ValueError("Wrong estimator type. Possible values: LSTM|FF|ZERO")
+        raise ValueError("Wrong estimator type. Possible values: LSTM|FF|ZERO|RAND")
 
     estimator = estimator.to(device)
 
@@ -157,27 +141,27 @@ if __name__ == '__main__':
 
             optimizer.zero_grad()
 
-            # transpose to time_first
-            batch_u = batch_u.transpose(0, 1).to(device)
-            batch_y = batch_y.transpose(0, 1).to(device)
+            # Compute fit loss
+            batch_u = batch_u.transpose(0, 1).to(device)  # transpose to time_first
+            batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
 
-            # State is estimated on the first seq_est_len samples
-            batch_u_est = batch_u[:seq_est_len]
-            batch_y_est = batch_y[:seq_est_len]
+            batch_u_est = batch_u[:args.seq_est_len]
+            batch_y_est = batch_y[:args.seq_est_len]
             batch_x0 = estimator(batch_u_est, batch_y_est)
 
-            if backward_est:
-                # fit on the whole dataset
-                batch_u_fit = batch_u[:args.seq_len]
-                batch_y_fit = batch_y[:args.seq_len]
+            batch_y_fit = batch_y[args.seq_est_len:]
+
+            if args.est_type not in ["ZERO", "RAND"]:  # for not-dummy estimators
+                batch_u_fit = batch_u[args.seq_est_len:]
             else:
-                # fit only after seq_est_len
-                batch_u_fit = batch_u[seq_est_len:seq_est_len+args.seq_len]
-                batch_y_fit = batch_y[seq_est_len:seq_est_len+args.seq_len]
+                batch_u_fit = batch_u
 
             batch_y_sim = model(batch_x0, batch_u_fit)
 
             # Compute fit loss
+            if args.est_type in ["ZERO", "RAND"]:  # for dummy estimators
+                batch_y_sim = batch_y_sim[args.seq_est_len:]
+
             loss = torch.nn.functional.mse_loss(batch_y_fit, batch_y_sim)
             train_loss += loss.item()
 
@@ -189,9 +173,6 @@ if __name__ == '__main__':
 
             if args.dry_run:
                 break
-
-            #            if itr % args.log_interval == 0:
-            #                print(f'Iteration {itr} | iteration loss {loss:.4f} ')
 
             itr += 1
 
