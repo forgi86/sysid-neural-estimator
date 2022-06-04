@@ -48,6 +48,8 @@ if __name__ == '__main__':
                         help='quickly check a single pass')
     parser.add_argument('--save-folder', type=str, default="models", metavar='S',
                         help='save folder (default: "model")')
+    parser.add_argument('--rep', type=int, default=0, metavar='N',
+                        help='repetition number (default: 0)')
 
     parser.add_argument('--n-threads', type=int, default=2,
                         help='number of CPU threads')
