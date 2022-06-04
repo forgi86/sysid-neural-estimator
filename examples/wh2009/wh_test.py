@@ -12,16 +12,9 @@ from torchid import metrics
 
 if __name__ == '__main__':
 
-    # model_data = torch.load(os.path.join("models", "model.pt"))
-    # model_data = torch.load(os.path.join("models", "doe1", "model_165.pt"))
-    # model_data = torch.load(os.path.join("models", "doe2", "model_1.pt"), map_location=torch.device('cpu'))
+    matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 
-    # model_data = torch.load(os.path.join("models", "doe2", "model_123.pt"), map_location=torch.device('cpu'))  # best
-    # model_data = torch.load(os.path.join("models", "doe2", "model_276.pt"), map_location=torch.device('cpu'))  # worst
-    # model_data = torch.load(os.path.join("models", "doe3", "model_74.pt"), map_location=torch.device('cpu'))  # best
-    # model_data = torch.load(os.path.join("models", "doe4", "model_10.pt"), map_location=torch.device('cpu'))  # best
-    # model_data = torch.load(os.path.join("models", "doe5", "model_113.pt"), map_location=torch.device('cpu'))  # best
-    model_data = torch.load(os.path.join("models", "doe5", "model_420.pt"), map_location=torch.device('cpu'))  # best
+    model_data = torch.load(os.path.join("models", "doe5", "model_113.pt"), map_location=torch.device('cpu'))  # best
 
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
@@ -55,10 +48,16 @@ if __name__ == '__main__':
 
     #%% Test
     fig, ax = plt.subplots(1, 1, sharex=True)
-    ax.plot(y[:, 0], 'k', label='meas')
+    ax.plot(y[:, 0], 'k', label='$y$')
     ax.grid(True)
-    ax.plot(y_sim[:, 0], 'b', label='sim')
-    ax.plot(y[:, 0] - y_sim[:, 0], 'r', label='sim')
+    ax.plot(y_sim[:, 0], 'b', label=r'$y^{\rm sim}$')
+    ax.plot(y[:, 0] - y_sim[:, 0], 'r', label=r'$y-y^{\rm sim}$')
+    ax.set_xlim([40000, 41000])
+    ax.set_ylim([-0.8, 0.8])
+    ax.set_xlabel("Sample index (-)")
+    ax.set_ylabel("Normalized output (-)")
+    ax.legend()
+    plt.savefig("wh_best_timetrace.pdf")
 
     #%%
     plt.figure()

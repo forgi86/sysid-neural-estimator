@@ -14,28 +14,14 @@ from torchid import metrics
 
 if __name__ == '__main__':
 
-    # model_data = torch.load(os.path.join("models", "model.pt"))
-    #model_data = torch.load(os.path.join("models", "doe1", "model_1.pt"))
-    #model_data = torch.load(os.path.join("models", "doe2", "model_1.pt"), map_location=torch.device('cpu'))
-    #model_data = torch.load(os.path.join("models", "doe2", "model_123.pt"), map_location=torch.device('cpu'))  # best
-    #model_data = torch.load(os.path.join("models", "doe2", "model_276.pt"), map_location=torch.device('cpu'))  # worst
-    #model_data = torch.load(os.path.join("models", "doe2", "model_169.pt"), map_location=torch.device('cpu'))  # short lstm
-    #model_data = torch.load(os.path.join("models", "doe3", "model_279.pt"), map_location=torch.device('cpu'))
-
-    #model_data = torch.load(os.path.join("models", "doe5", "model_420.pt"), map_location=torch.device('cpu'))  # worst
-    #model_data = torch.load(os.path.join("models", "doe5", "model_113.pt"), map_location=torch.device('cpu'))  # worst
-
-    #model_data = torch.load(os.path.join("models", "doe5", "model_389.pt"), map_location=torch.device('cpu'))  # worst Z
-    model_data = torch.load(os.path.join("models", "doe5", "model_5.pt"), map_location=torch.device('cpu')) # best
-    #model_data = torch.load(os.path.join("models", "doe5", "model_578.pt"), map_location=torch.device('cpu'))  # worst
-
+    # model_data = torch.load(os.path.join("models", "doe5", "model_389.pt"), map_location=torch.device('cpu'))  # worst ZERO
+    model_data = torch.load(os.path.join("models", "doe5", "model_5.pt"), map_location=torch.device('cpu'))  # best
+    # model_data = torch.load(os.path.join("models", "doe5", "model_578.pt"), map_location=torch.device('cpu'))  # worst
 
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
     n_u = model_data["n_u"]
     args = model_data["args"]
-
-
 
     # Derived parameters
     if "est_frac" in args and args.est_frac is not None:
@@ -131,9 +117,10 @@ if __name__ == '__main__':
     #plt.suptitle("Training sequences")
     for idx in range(examples):
         ax[idx].plot(batch_y_np[idx], 'k', label="Training sequence")
-        ax[idx].plot(batch_y_sim_full_np[idx], 'b--o', label="LSTM estimator")
-        ax[idx].plot(batch_y_sim_full_np_worst[idx], 'm--*', label="ZERO estimator")
-        #ax[idx].set_ylim((-2, 3))
+        ax[idx].plot(batch_y_sim_full_np[idx], 'b--o', label="$\hat y$ LSTM estimator")
+        ax[idx].plot(batch_y_sim_full_np_worst[idx], 'm--*', label="$\hat y$ ZERO estimator")
+        ax[idx].grid(True)
+        #ax[idx].set_ylim((-2, 2))
 
         if idx == 0:
             ax[idx].legend(loc="upper right")
