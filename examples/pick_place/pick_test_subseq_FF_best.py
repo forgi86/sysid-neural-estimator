@@ -114,14 +114,14 @@ if __name__ == '__main__':
         ax[idx].plot(batch_y_np[idx], 'k', label="Training sequence")
         ax[idx].plot(batch_y_sim_full_np[idx], 'b--', label="$\hat{y}$ FF estimator")
         ax[idx].plot(batch_y_sim_full_np_worst[idx], 'm--', label=" $\hat{y}$ ZERO estimator")
-        ax[idx].tick_params(axis='both', which='major', labelsize=15)
+        ax[idx].tick_params(axis='both', which='major', labelsize=16)
         #ax[idx].set_ylim((-2, 3))
 
         if idx == 0:
-            ax[idx].legend(loc="upper right")
+            ax[idx].legend(loc="upper right", fontsize = 16)
         #ax[idx].plot(batch_y_np[idx] - batch_y_sim_full_np[idx], 'r-.')
         if idx == examples - 1:
-            ax[idx].set_xlabel(" Training (estimation + fitting) sequence index (-)", fontsize = 15)
+            ax[idx].set_xlabel("Training (estimation + fitting) sequence index (-)", fontsize = 16)
         ax[idx].grid(axis="x")
         
     plt.savefig("pp_subseq_best_worst.pdf")
