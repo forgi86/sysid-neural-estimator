@@ -108,20 +108,20 @@ if __name__ == '__main__':
     batch_y_sim_full_np_worst = np.load("subseq_pp_zero.npy")
 
     examples = 3
-    fig, ax = plt.subplots(examples, 1, sharex=True, figsize=(8, 6))
+    fig, ax = plt.subplots(examples, 1, sharex=True, figsize=(12, 9))
     #plt.suptitle("Training sequences")
     for idx in range(examples):
         ax[idx].plot(batch_y_np[idx], 'k', label="Training sequence")
         ax[idx].plot(batch_y_sim_full_np[idx], 'b--', label="$\hat{y}$ FF estimator")
         ax[idx].plot(batch_y_sim_full_np_worst[idx], 'm--', label=" $\hat{y}$ ZERO estimator")
-        ax[idx].tick_params(axis='both', which='major', labelsize=16)
+        ax[idx].tick_params(axis='both', which='major', labelsize=20)
         #ax[idx].set_ylim((-2, 3))
 
         if idx == 0:
-            ax[idx].legend(loc="upper right", fontsize = 16)
+            ax[idx].legend(loc="upper right", bbox_to_anchor=(1,1.3), fontsize = 20)
         #ax[idx].plot(batch_y_np[idx] - batch_y_sim_full_np[idx], 'r-.')
         if idx == examples - 1:
-            ax[idx].set_xlabel("Training (estimation + fitting) sequence index (-)", fontsize = 16)
+            ax[idx].set_xlabel("Training (estimation + fitting) sequence index (-)", fontsize = 20)
         ax[idx].grid(axis="x")
         
     plt.savefig("pp_subseq_best_worst.pdf")
