@@ -2,7 +2,7 @@ import os
 import numpy as np
 import scipy.io as sio
 import matplotlib
-matplotlib.use("TKAgg")
+#matplotlib.use("TKAgg")
 
 data_file = "headdata_1v6.mat"
 idx_train = 50000
