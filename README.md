@@ -1,6 +1,6 @@
 # Learning neural state-space models: do we need a state estimator?
 
-This repository contains the Python code to reproduce the results of the paper [Learning neural state-space models: do we need a state estimator?](https://arxiv.org/pdf/2006.02250.pdf) by Marco Forgione, Manas Mejari and Dario Piga.
+This repository contains the Python code to reproduce the results of the paper *Learning neural state-space models: do we need a state estimator?* by Marco Forgione, Manas Mejari and Dario Piga.
 
 
 # Folders:
