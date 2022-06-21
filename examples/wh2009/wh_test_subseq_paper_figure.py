@@ -14,6 +14,8 @@ from torchid import metrics
 
 if __name__ == '__main__':
 
+    matplotlib.rc('font', **{'size': 14, 'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+
     # model_data = torch.load(os.path.join("models", "doe5", "model_389.pt"), map_location=torch.device('cpu'))  # worst ZERO
     model_data = torch.load(os.path.join("models", "doe5", "model_5.pt"), map_location=torch.device('cpu'))  # best
     # model_data = torch.load(os.path.join("models", "doe5", "model_578.pt"), map_location=torch.device('cpu'))  # worst
@@ -120,10 +122,12 @@ if __name__ == '__main__':
         ax[idx].plot(batch_y_sim_full_np[idx], 'b--o', label="$\hat y$ LSTM estimator")
         ax[idx].plot(batch_y_sim_full_np_worst[idx], 'm--*', label="$\hat y$ ZERO estimator")
         ax[idx].grid(True)
+        #if idx == 0:
+        #    ax[idx].set_ylim((-1, 3))
         #ax[idx].set_ylim((-2, 2))
 
         if idx == 0:
-            ax[idx].legend(loc="upper right")
+            ax[idx].legend(loc="upper right", bbox_to_anchor=(1.0, 1.3), frameon=True)
         #ax[idx].plot(batch_y_np[idx] - batch_y_sim_full_np[idx], 'r-.')
         if idx == examples - 1:
             ax[idx].set_xlabel(" Training (estimation + fitting) sequence index (-)")

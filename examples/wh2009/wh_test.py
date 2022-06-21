@@ -5,14 +5,13 @@ from torchid.ss.dt.simulator import StateSpaceSimulator
 from torchid.ss.dt.estimators import LSTMStateEstimator
 from loader import wh2009_loader, wh2009_scaling
 import matplotlib
-matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
 from torchid import metrics
 
 
 if __name__ == '__main__':
 
-    matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+    matplotlib.rc('font', **{'size': 14, 'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 
     model_data = torch.load(os.path.join("models", "doe5", "model_113.pt"), map_location=torch.device('cpu'))  # best
 
@@ -53,10 +52,10 @@ if __name__ == '__main__':
     ax.plot(y_sim[:, 0], 'b', label=r'$y^{\rm sim}$')
     ax.plot(y[:, 0] - y_sim[:, 0], 'r', label=r'$y-y^{\rm sim}$')
     ax.set_xlim([40000, 41000])
-    ax.set_ylim([-0.8, 0.8])
+    ax.set_ylim([-0.8, 1.0])
     ax.set_xlabel("Sample index (-)")
     ax.set_ylabel("Normalized output (-)")
-    ax.legend()
+    ax.legend(loc="upper right")#bbox_to_anchor=(0.9, 1.3), frameon=True)
     plt.savefig("wh_best_timetrace.pdf")
 
     #%%

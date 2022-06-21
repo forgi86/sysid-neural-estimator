@@ -1,8 +1,6 @@
 import os
 import numpy as np
 import torch
-import sys
-sys.path.append("G:\My Drive\ID SUB SEQ\ident-subseq")
 
 import torchid.ss.dt.models as models
 import torchid.ss.dt.estimators as estimators

@@ -9,13 +9,15 @@ import torchid.ss.dt.estimators as estimators
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
-
-
+import matplotlib
 from loader import pick_place_loader
 import matplotlib.pyplot as plt
 
 
+
 if __name__ == '__main__':
+
+    matplotlib.rc('font', **{'size': 14, 'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 
     #model_data = torch.load(os.path.join("models", "model.pt"), map_location=torch.device('cpu'))
     #model_data = torch.load(os.path.join("models", "doe1", "model_67.pt"), map_location=torch.device('cpu'))

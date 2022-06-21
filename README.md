@@ -5,14 +5,16 @@ This repository contains the Python code to reproduce the results of the paper [
 
 # Folders:
 * [torchid](torchis):  PyTorch implementation of neural state-space model. Adapted from the library https://github.com/forgi86/pytorch-ident developed by the first author.
-* [examples](examples): examples using dynoNet for system identification 
-* [util](util): definition of metrics R-square, RMSE, fit index 
-* [doc](doc): paper & slides
+* [examples](examples): experimentations and analyses of the paper: Wiener-Hammerstein circuit and pick-and-place machine.
+* [doepy](doepy): library used for experiment planning. Adapted (with small bug fixes) from https://github.com/tirthajyoti/doepy
+ <!--*  [doc](doc): paper latex files -->
 
 Three [examples](examples) discussed in the paper are:
 
 * [Wiener-Hammerstein Benchmark](examples/WH2009): A circuit with Wiener-Hammerstein behavior. Experimental dataset from http://www.nonlinearbenchmark.org
-* [Pick & place machine](examples/EMPS): A controlled prismatic joint (Electro Mechanical Positioning System). Experimental dataset from http://www.nonlinearbenchmark.org
+* [Pick & place machine](examples/EMPS): An
+electronic component placement process in a pick-and-place
+machine. Experimental dataset from http://www.nonlinearbenchmark.org
 
 # Software requirements:
 Experiments were performed on a Python 3.9 conda environment with
@@ -33,11 +35,12 @@ conda install pytorch torchvision -c pytorch
 
 # Citing
 
-If you find this project useful, we encourage you to
+If you find this project useful, we encourage you to:
 
 * Star this repository :star: 
 
-* Cite the [paper](https://onlinelibrary.wiley.com/doi/abs/10.1002/acs.3216) 
+<!--
+ * Cite the [paper](https://onlinelibrary.wiley.com/doi/abs/10.1002/acs.3216) 
 ```
 @article{forgione2021dyno,
   title={\textit{dyno{N}et}: A neural network architecture for learning dynamical systems},
@@ -50,3 +53,4 @@ If you find this project useful, we encourage you to
   publisher={Wiley}
 }
 ```
+-->
