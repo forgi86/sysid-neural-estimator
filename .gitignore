@@ -147,5 +147,4 @@ cython_debug/
 .idea/
 
 # Project-specific folders
-/examples/wh2009/models/
 /examples/wh2009/logs/
