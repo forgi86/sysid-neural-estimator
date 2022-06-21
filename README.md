@@ -14,7 +14,9 @@ Three [examples](examples) discussed in the paper are:
 * [Wiener-Hammerstein Benchmark](examples/WH2009): A circuit with Wiener-Hammerstein behavior. Experimental dataset from http://www.nonlinearbenchmark.org
 * [Pick & place machine](examples/EMPS): An
 electronic component placement process in a pick-and-place
-machine. Experimental dataset from http://www.nonlinearbenchmark.org
+machine. Originally introduced in *A.Lj Juloski et al., Data-based
+hybrid modelling of the component placement process in pick-and-place
+machines, 2004.* Experimental dataset included in this repo.
 
 # Software requirements:
 Experiments were performed on a Python 3.9 conda environment with
