@@ -1,0 +1,1 @@
+doe1: pick-and-place experimental campaign reported in the paper.
