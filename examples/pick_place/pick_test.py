@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
 
     #model_data = torch.load(os.path.join("models", "model.pt"), map_location=torch.device('cpu'))
-    model_data = torch.load(os.path.join("models", "doe1", "model_297.pt"), map_location=torch.device('cpu'))
+    model_data = torch.load(os.path.join("models", "doe1", "model_75.pt"), map_location=torch.device('cpu'))
 
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
