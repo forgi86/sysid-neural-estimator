@@ -1,17 +1,19 @@
 import os
 import numpy as np
 import torch
+#import sys
+#sys.path.append("G:\My Drive\TAI neural ss code\sysid-neural-estimator")
 import torchid.ss.dt.models as models
 import torchid.ss.dt.estimators as estimators
 from torchid.ss.dt.simulator import StateSpaceSimulator
-from loader import pick_place_loader
+from loader import pick_place_loader, pick_place_scaling
 import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
 
     #model_data = torch.load(os.path.join("models", "model.pt"), map_location=torch.device('cpu'))
-    model_data = torch.load(os.path.join("models", "doe1", "model_129.pt"), map_location=torch.device('cpu'))
+    model_data = torch.load(os.path.join("models", "doe1", "model_297.pt"), map_location=torch.device('cpu'))
 
     n_x = model_data["n_x"]
     n_y = model_data["n_y"]
@@ -19,7 +21,9 @@ if __name__ == '__main__':
     args = model_data["args"]
     decimate = 10
 
-    t_full, u_full, y_full = pick_place_loader(dataset="full", decimate=decimate, scale=True)
+    t_full, u_full, y_full = pick_place_loader(dataset="test", decimate=decimate, scale=True)
+    
+    u_mean, u_std, y_mean, y_std = pick_place_scaling()
 
     f_xu = models.NeuralLinStateUpdateV2(n_x, n_u, hidden_size=args.hidden_size)
     g_x = models.LinearOutput(n_x, n_u)
@@ -62,13 +66,26 @@ if __name__ == '__main__':
 
         if args.est_type not in ["ZERO", "RAND"]:  # for non-dummy estimators
             y_sim = np.r_[np.zeros((args.seq_est_len, 1)), y_sim]
+            
+    #%% Test
+    fig, ax = plt.subplots(1, 1, sharex=True)
+    ax.plot(y_full[args.seq_est_len:, 0], 'k', label='$y$')
+    ax.grid(True)
+    ax.plot(y_sim[args.seq_est_len:, 0], 'b', label=r'$y^{\rm sim}$')
+    ax.plot(y_full[args.seq_est_len:, 0] - y_sim[args.seq_est_len:, 0], 'r', label=r'$y-y^{\rm sim}$')
+    #ax.set_xlim([40000, 41000])
+    #ax.set_ylim([-0.8, 0.8])
+    ax.set_xlabel("Sample index (-)")
+    ax.set_ylabel("Normalized Output (-)")
+    ax.legend(loc='upper center')
+    plt.savefig("pp_best_timetrace.pdf")
 
     # %% Metrics
 
     from torchid import metrics
-    e_rms = metrics.rmse(y_full, y_sim)[0]
-    fit_idx = metrics.fit_index(y_full, y_sim)[0]
-    r_sq = metrics.r_squared(y_full, y_sim)[0]
+    e_rms = metrics.rmse(y_full[args.seq_est_len:], y_sim[args.seq_est_len:])[0]
+    fit_idx = metrics.fit_index(y_full[args.seq_est_len:], y_sim[args.seq_est_len:])[0]
+    r_sq = metrics.r_squared(y_full[args.seq_est_len:], y_sim[args.seq_est_len:])[0]
 
     print(f"RMSE: {e_rms:.1f} \nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
