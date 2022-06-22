@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import torch
+#import sys
+#sys.path.append("G:\My Drive\TAI neural ss code\sysid-neural-estimator")
 import pandas as pd
 from torchid.ss.dt.simulator import StateSpaceSimulator
 import torchid.ss.dt.models as models
@@ -22,7 +24,7 @@ if __name__ == '__main__':
     #df_res["RMSE"] = np.nan
 
     # Load dataset
-    t, u, y = pick_place_loader("test", scale=True)
+    t, u, y = pick_place_loader(dataset="test", decimate= decimate, scale=True)
     u_mean, u_std, y_mean, y_std = pick_place_scaling()
 
     torch.set_num_threads(4)
@@ -85,7 +87,7 @@ if __name__ == '__main__':
             if args.est_type not in ["ZERO", "RAND"]:  # for non-dummy estimators
                 y_sim = np.r_[np.zeros((args.seq_est_len, 1)), y_sim]
 
-        fit_idx = metrics.fit_index(y, y_sim)[0]
+        fit_idx = metrics.fit_index(y[args.seq_est_len:], y_sim[args.seq_est_len:])[0]
         df_res.loc[exp_id, "FIT"] = fit_idx
 
     df_res.to_csv(os.path.join("does", DOE_NAME + "_res.csv"))
