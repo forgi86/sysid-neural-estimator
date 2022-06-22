@@ -27,6 +27,10 @@ def pick_place_loader(dataset="train", decimate=10, scale=True, dtype=np.float32
         y = y[:idx_train]
     elif dataset == "full":
         pass
+    elif dataset == "test":
+        t = t[idx_train:] - t[idx_train]
+        u = u[idx_train:]
+        y = y[idx_train:]
 
     if decimate > 1:
         t = t[0::decimate]
@@ -46,7 +50,7 @@ def pick_place_scaling():
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    t, u, y = pick_place_loader(dataset="train", decimate=10, scale=True)
+    t, u, y = pick_place_loader(dataset="test", decimate=10, scale=True)
     ts = np.median(np.diff(t, axis=0))
     v = np.r_[[[0]], np.diff(y, axis=0)/ts]
     fig, ax = plt.subplots(3, 1, sharex=True)
