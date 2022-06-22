@@ -22,26 +22,26 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='State-space neural network tests')
     parser.add_argument('--experiment_id', type=int, default=-1, metavar='N',
                         help='experiment id (default: -1)')
-    parser.add_argument('--epochs', type=int, default=100, metavar='N',
-                        help='number of epochs to train (default: 20000)')
-    parser.add_argument('--max_time', type=float, default=300, metavar='N',
+    parser.add_argument('--epochs', type=int, default=10000, metavar='N',
+                        help='number of epochs to train (default: 10000)')
+    parser.add_argument('--max_time', type=float, default=3600, metavar='N',
                         help='maximum training time in seconds (default:3600)')
-    parser.add_argument('--batch_size', type=int, default=1024, metavar='N',
-                        help='batch size (default:64)')
+    parser.add_argument('--batch_size', type=int, default=128, metavar='N',
+                        help='batch size (default:128)')
     parser.add_argument('--seq_len', type=int, default=80, metavar='N',
-                        help='length of the training sequences (default: 20000)')
-    parser.add_argument('--seq_est_len', type=int, default=50, metavar='N',
-                        help='length of the training sequences (default: 20000)')
+                        help='length of the training sequences (default: 80)')
+    parser.add_argument('--seq_est_len', type=int, default=40, metavar='N',
+                        help='length of the training sequences (default: 40)')
     parser.add_argument('--est_direction', type=str, default="forward",
                         help='Estimate forward in time')
-    parser.add_argument('--est_type', type=str, default="FF",
-                        help='Estimator type. Possible values: LSTM|FF|ZERO|RAND')
+    parser.add_argument('--est_type', type=str, default="LSTM",
+                        help='Estimator type. Possible values: LSTM|FF|ZERO|RAND (default: LSTM')
     parser.add_argument('--est_hidden_size', type=int, default=16, metavar='N',
-                        help='model: number of units per hidden layer (default: 64)')
+                        help='model: number of units per hidden layer (default: 16)')
     parser.add_argument('--hidden_size', type=int, default=15, metavar='N',
-                        help='estimator: number of units per hidden layer (default: 64)')
-    parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
-                        help='learning rate (default: 1e-4)')
+                        help='estimator: number of units per hidden layer (default: 15)')
+    parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
+                        help='learning rate (default: 1e-3)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
     parser.add_argument('--dry-run', action='store_true', default=False,
@@ -51,8 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('--rep', type=int, default=0, metavar='N',
                         help='repetition number (default: 0)')
 
-    parser.add_argument('--n-threads', type=int, default=2,
-                        help='number of CPU threads')
+    parser.add_argument('--n-threads', type=int, default=10,
+                        help='number of CPU threads (default: 10)')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
     parser.add_argument('--cuda-device', type=str, default="cuda:0", metavar='S',

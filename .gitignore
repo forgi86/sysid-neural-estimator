@@ -148,3 +148,4 @@ cython_debug/
 
 # Project-specific folders
 /examples/wh2009/logs/
+/examples/pick_place/logs/

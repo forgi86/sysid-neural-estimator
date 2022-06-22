@@ -1,6 +1,6 @@
-# python doe_run.py --plan experiment_plan.csv --name doe1 --n-threads 10 --no-cuda
-# python doe_run.py --plan experiment_plan.csv --name doe1 --n-threads 2 --no-cuda --no-run
-# python doe_run.py - -plan does/doe5_plan.csv --name doe5 --n-threads 10
+# python doe_run.py --plan does/doe5_plan.csv --name doe5 --n-threads 10 --cuda-device cuda:2 # Used to execute doe5: main parameter exploration in the paper
+# python doe_run.py --plan does/doe6_plan.csv --name doe6 --n-threads 10 --cuda-device cuda:2  # Used to run doe6: 100 repetitions of the best configuration
+# python doe_run.py --plan experiment_plan.csv --name doe5 --n-threads 10 --no-cuda --no-run # This generates the commands without running them 
 import pandas as pd
 import subprocess
 import os
