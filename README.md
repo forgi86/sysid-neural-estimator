@@ -34,7 +34,7 @@ conda install numpy scipy pandas matplotlib
 conda install pytorch torchvision -c pytorch
 ```
 
-To run the software, please make sure that the repository root is added to 
+To run the software, please make sure that this repository's root folder is added to 
 your PYTHONPATH.
 
 # Citing
