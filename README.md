@@ -1,6 +1,6 @@
 # Learning neural state-space models: do we need a state estimator?
 
-This repository contains the Python code to reproduce the results of the paper *Learning neural state-space models: do we need a state estimator?* by Marco Forgione, Manas Mejari and Dario Piga.
+This repository contains the Python code to reproduce the results of the paper [Learning neural state-space models: do we need a state estimator?](https://arxiv.org/abs/2206.12928) by Marco Forgione, Manas Mejari and Dario Piga.
 
 
 # Folders:
@@ -43,18 +43,12 @@ If you find this project useful, we encourage you to:
 
 * Star this repository :star: 
 
-<!--
- * Cite the [paper](https://onlinelibrary.wiley.com/doi/abs/10.1002/acs.3216) 
+* Cite the [paper](https://arxiv.org/abs/2206.12928) 
 ```
-@article{forgione2021dyno,
-  title={\textit{dyno{N}et}: A neural network architecture for learning dynamical systems},
-  author={Forgione, M. and Piga, D.},
-  journal={International Journal of Adaptive Control and Signal Processing},
-  volume={35},
-  number={4},
-  pages={612--626},
-  year={2021},
-  publisher={Wiley}
+@article{forgione2022a,
+  title={Learning neural state-space models: do we need a state estimator?},
+  author={Forgione, M. and Mejari, M and Piga, D.},
+  journal={arXiv preprint arXiv:2206.12928},
+  year={2022}
 }
 ```
--->
