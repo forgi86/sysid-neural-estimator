@@ -47,7 +47,7 @@ If you find this project useful, we encourage you to:
 ```
 @article{forgione2022a,
   title={Learning neural state-space models: do we need a state estimator?},
-  author={Forgione, M. and Mejari, M and Piga, D.},
+  author={Forgione, M. and Mejari, M. and Piga, D.},
   journal={arXiv preprint arXiv:2206.12928},
   year={2022}
 }
