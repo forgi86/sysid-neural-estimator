@@ -130,7 +130,7 @@ class NeuralLinStateUpdate(nn.Module):
         >>> ss_model = NeuralStateUpdate(n_x=2, n_u=1, hidden_size=64)
     """
 
-    def __init__(self, n_x, n_u, hidden_size=16, init_small=True):
+    def __init__(self, n_x, n_u, hidden_size=16, init="kaiming_small"):
         super(NeuralLinStateUpdate, self).__init__()
         self.n_x = n_x
         self.n_u = n_u
@@ -143,15 +143,31 @@ class NeuralLinStateUpdate(nn.Module):
         self.lin = nn.Linear(n_x + n_u, n_x, bias=False)
         self.nl_on = True
 
-        if init_small:
-            for m in self.net.modules():
-                if isinstance(m, nn.Linear):
-                    nn.init.normal_(m.weight, mean=0, std=1e-4)
-                    nn.init.constant_(m.bias, val=0)
+        if init=="small":
+            nn.init.normal_(self.net[0].weight, mean=0, std=1e-4)
+            nn.init.constant_(self.net[0].bias, val=0)
 
-            for m in self.lin.modules():
-                if isinstance(m, nn.Linear):
-                    nn.init.normal_(m.weight, mean=0, std=1e-4)
+            nn.init.normal_(self.net[2].weight, mean=0, std=1e-4)
+            nn.init.constant_(self.net[2].bias, val=0)
+
+        elif init=="kaiming_small":
+            nn.init.kaiming_normal_(self.net[0].weight, nonlinearity="linear")
+            nn.init.constant_(self.net[0].bias, val=0)
+
+            nn.init.normal_(self.net[2].weight, mean=0, std=1e-4) # last layer small
+            nn.init.constant_(self.net[2].bias, val=0)
+
+        elif init == "default":
+            pass  # default pytorch init
+
+            # for m in self.net.modules():
+            #     if isinstance(m, nn.Linear):
+            #         nn.init.normal_(m.weight, mean=0, std=1e-4)
+            #         nn.init.constant_(m.bias, val=0)
+
+            # for m in self.lin.modules():
+            #     if isinstance(m, nn.Linear):
+            #         nn.init.normal_(m.weight, mean=0, std=1e-4)
 
     def freeze_nl(self):
         self.net.requires_grad_(False)
