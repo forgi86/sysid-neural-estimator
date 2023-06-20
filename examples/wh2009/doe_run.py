@@ -9,7 +9,7 @@ import argparse
 
 
 def prepare_command(config):
-    cmd = 'python main_zero_rand.py '
+    cmd = 'python main.py '
     for key, value in config.items():
         cmd += f" --{key} {value}"
     return cmd
